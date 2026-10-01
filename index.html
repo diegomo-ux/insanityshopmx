@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="description" content="INSANITY · Streetwear, equipaje urbano y aromas. Aparta por WhatsApp con 50% y recibe en Cuernavaca y Jiutepec.">
+<title>INSANITY Tienda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: mobile-first. Fotos grandes, mucho negro. Botones en hueso; olivo apagado solo en detalles. */
+:root {
+  --asfalto: #111111;
+  --carbon: #191919;
+  --linea: #2b2b2b;
+  --humo: #8f8f8f;
+  --blanco: #ffffff;
+  --hueso: #ECE7DD;
+  --olivo: #A3AE8C;
+  --alerta: #D9534F;
+  --f-display: "Anton", "Oswald", Impact, "Arial Narrow", sans-serif;
+  --f-texto: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --f-codigo: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gutter: 16px;
+  --max: 1200px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--asfalto);
+  color: var(--blanco);
+  font-family: var(--f-texto);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { max-width: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 1px solid var(--hueso); outline-offset: 2px; }
+
+.wrap { max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+.mono { font-family: var(--f-codigo); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.muted { color: var(--humo); }
+
+/* ---------- Botones ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 48px; padding: 0 24px;
+  border: 1px solid var(--blanco); background: transparent;
+  font-family: var(--f-codigo); font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  text-decoration: none; transition: box-shadow .2s, background .2s, color .2s;
+}
+.btn-neon { background: var(--hueso); border-color: var(--hueso); color: #0d0d0d; }
+.btn-neon:hover, .btn-neon:focus-visible { background: transparent; color: var(--hueso); }
+.btn-linea:hover { background: var(--blanco); color: var(--asfalto); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .35; pointer-events: none; }
+.btn-full { width: 100%; }
+
+/* ---------- Header ---------- */
+.header {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+  background: rgba(17,17,17,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--linea);
+}
+.header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo img { height: 34px; width: auto; }
+.logo-word { font-family: var(--f-display); font-size: 15px; line-height: .92; letter-spacing: .06em; }
+.nav { display: none; gap: 28px; }
+.nav a { text-decoration: none; font-family: var(--f-codigo); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--humo); }
+.nav a:hover { color: var(--blanco); }
+.cart-btn {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 12px; background: none; border: 1px solid var(--linea);
+  font-family: var(--f-codigo); font-size: 12px; letter-spacing: .1em;
+}
+.cart-btn:hover { border-color: var(--blanco); }
+.badge {
+  min-width: 20px; height: 20px; padding: 0 5px; display: inline-grid; place-items: center;
+  background: var(--hueso); color: #0d0d0d; font-family: var(--f-codigo); font-size: 11px; font-weight: 600;
+}
+.badge.cero { background: var(--linea); color: var(--humo); }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; border-bottom: 1px solid var(--linea); }
+.hero-foto { position: relative; aspect-ratio: 4 / 5; max-height: 82vh; width: 100%; overflow: hidden; }
+.hero-foto img { width: 100%; height: 100%; object-fit: cover; }
+.hero-foto::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(17,17,17,0) 35%, rgba(17,17,17,.75) 70%, var(--asfalto) 100%);
+}
+.hero-txt { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--gutter) 28px; z-index: 2; }
+.hero-collage { display: none; }
+.eyebrow { color: var(--olivo); }
+.hero h1 {
+  font-family: var(--f-display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(46px, 14vw, 104px); line-height: .9; letter-spacing: .01em; margin: 10px 0 12px;
+  text-wrap: balance;
+}
+.hero p { margin: 0 0 22px; max-width: 34ch; color: #d6d6d6; }
+
+/* ---------- Secciones ---------- */
+.seccion { padding-block: 56px; border-bottom: 1px solid var(--linea); }
+.sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.sec-head h2 {
+  font-family: var(--f-display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(30px, 8vw, 52px); line-height: .95; margin: 6px 0 0; text-wrap: balance;
+}
+.sec-head .mono { white-space: nowrap; }
+
+/* ---------- Grid de productos ---------- */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; }
+.card { display: flex; flex-direction: column; gap: 10px; background: none; border: 0; padding: 0; text-align: left; min-width: 0; }
+.card-img { position: relative; aspect-ratio: 4 / 5; background: var(--carbon); border: 1px solid var(--linea); overflow: hidden; }
+.card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.card:hover .card-img img { transform: scale(1.04); }
+.card:hover .card-img { border-color: #4a4a4a; }
+.card-tag {
+  position: absolute; top: 8px; left: 8px; padding: 4px 7px;
+  background: rgba(17,17,17,.85); border: 1px solid var(--linea);
+  font-family: var(--f-codigo); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+}
+.card-tag.ultima { color: var(--hueso); border-color: var(--hueso); }
+.card-tag.agotado { color: var(--alerta); border-color: var(--alerta); }
+.card.sold .card-img img, .card.sold .ph { filter: grayscale(1) brightness(.5); }
+.card-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.card-name { font-weight: 600; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+.card-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.precio { font-family: var(--f-codigo); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+/* Placeholder cuando un producto aún no tiene foto */
+.ph {
+  position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 14px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 4px),
+    radial-gradient(120% 80% at 50% 30%, #222 0%, var(--carbon) 70%);
+  color: #5a5a5a;
+}
+.ph svg { width: 42%; height: auto; }
+.ph span { font-family: var(--f-codigo); font-size: 11px; letter-spacing: .14em; }
+
+/* ---------- Aromas (producto estrella) ---------- */
+.aromas { background: linear-gradient(180deg, #0c0c0c, var(--asfalto)); }
+.aromas-intro { max-width: 46ch; color: #cfcfcf; margin: -8px 0 24px; }
+.scroller {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 62%; gap: 12px;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;
+  scrollbar-width: thin; scrollbar-color: var(--linea) transparent;
+}
+.scroller > * { scroll-snap-align: start; }
+
+/* ---------- Catálogo ---------- */
+.tabs {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 20;
+  background: rgba(17,17,17,.95); border-bottom: 1px solid var(--linea);
+  margin-bottom: 22px;
+}
+.tabs-in { display: flex; gap: 6px; overflow-x: auto; padding-block: 10px; scrollbar-width: none; }
+.tabs-in::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none; min-height: 40px; padding: 0 16px; background: none; border: 1px solid var(--linea);
+  font-family: var(--f-codigo); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--humo);
+}
+.tab[aria-pressed="true"] { border-color: var(--blanco); color: var(--blanco); background: var(--carbon); }
+.tab .n { color: var(--humo); margin-left: 6px; }
+
+/* ---------- La Familia ---------- */
+.familia .scroller { grid-auto-columns: 72%; }
+.familia figure { margin: 0; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--linea); position: relative; }
+.familia figure img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Manifiesto ---------- */
+.manifiesto-lista { display: grid; gap: 28px; }
+.manifiesto-lista div { border-top: 1px solid var(--linea); padding-top: 16px; }
+.manifiesto-lista h3 { font-family: var(--f-display); font-weight: 400; font-size: 26px; text-transform: uppercase; margin: 8px 0 6px; line-height: 1; }
+.manifiesto-lista p { margin: 0; color: #cfcfcf; max-width: 42ch; }
+
+/* ---------- Cómo comprar ---------- */
+.pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: paso; }
+.pasos li { display: grid; grid-template-columns: 52px 1fr; gap: 14px; padding: 18px 0; border-top: 1px solid var(--linea); counter-increment: paso; }
+.pasos li::before { content: "0" counter(paso); font-family: var(--f-codigo); color: var(--olivo); font-size: 13px; padding-top: 3px; }
+.pasos h3 { margin: 0 0 4px; font-size: 16px; }
+.pasos p { margin: 0; color: #c4c4c4; font-size: 14px; }
+.reglas { margin-top: 26px; border: 1px solid var(--linea); background: var(--carbon); padding: 18px; display: grid; gap: 10px; }
+.reglas p { margin: 0; font-size: 14px; color: #dedede; }
+.reglas strong { color: var(--blanco); }
+
+/* ---------- Footer ---------- */
+.footer { padding-block: 48px calc(48px + 70px); }
+.footer-grid { display: grid; gap: 30px; }
+.footer-logo { font-family: var(--f-display); font-size: 44px; line-height: .9; letter-spacing: .04em; }
+.footer h4 { font-family: var(--f-codigo); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--humo); font-weight: 400; margin: 0 0 12px; }
+.footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.footer a { text-decoration: none; color: #d0d0d0; }
+.footer a:hover { color: var(--hueso); }
+.footer-bottom { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--linea); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+
+/* ---------- Carrito flotante (celular) ---------- */
+.fab {
+  position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40;
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 18px;
+  background: var(--hueso); color: #0d0d0d; border: 0;
+  font-family: var(--f-codigo); font-weight: 600; font-size: 13px; letter-spacing: .1em;
+  box-shadow: 0 8px 28px rgba(0,0,0,.6);
+  transition: transform .2s;
+}
+.fab .badge { background: #0d0d0d; color: var(--hueso); }
+.fab.pulse { animation: pulse .5s ease; }
+@keyframes pulse { 50% { transform: scale(1.08); } }
+
+/* ---------- Paneles (ficha y carrito) ---------- */
+.velo { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.7); opacity: 0; pointer-events: none; transition: opacity .25s; }
+.velo.on { opacity: 1; pointer-events: auto; }
+.panel {
+  position: fixed; z-index: 60; left: 0; right: 0; bottom: 0;
+  max-height: 92vh; display: flex; flex-direction: column;
+  background: var(--asfalto); border-top: 1px solid var(--linea);
+  transform: translateY(105%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.panel.on { transform: none; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px var(--gutter); border-bottom: 1px solid var(--linea); flex: none; }
+.panel-head h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; text-transform: uppercase; letter-spacing: .02em; }
+.cerrar { width: 44px; height: 44px; background: none; border: 1px solid var(--linea); font-size: 18px; }
+.cerrar:hover { border-color: var(--blanco); }
+.panel-body { overflow-y: auto; padding: 16px var(--gutter); flex: 1; min-height: 0; }
+.panel-foot { flex: none; padding: 14px var(--gutter) calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--linea); background: var(--asfalto); }
+
+/* Ficha de producto */
+.ficha { display: grid; gap: 18px; }
+.ficha-img { position: relative; aspect-ratio: 4 / 5; max-height: 52vh; width: 100%; background: var(--carbon); border: 1px solid var(--linea); overflow: hidden; }
+.ficha-img img { width: 100%; height: 100%; object-fit: cover; }
+.ficha h4 { font-family: var(--f-display); font-weight: 400; font-size: 30px; line-height: 1; text-transform: uppercase; margin: 6px 0 8px; }
+.ficha .precio { font-size: 20px; }
+.stock-line { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: #cfcfcf; }
+.dot { width: 7px; height: 7px; background: var(--olivo); flex: none; }
+.dot.rojo { background: var(--alerta); box-shadow: none; }
+.tallas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.talla { min-width: 52px; min-height: 46px; padding: 0 12px; background: none; border: 1px solid var(--linea); font-family: var(--f-codigo); font-weight: 600; }
+.talla[aria-pressed="true"] { border-color: var(--hueso); background: var(--hueso); color: #0d0d0d; }
+.aviso { font-size: 12px; color: var(--alerta); margin-top: 8px; min-height: 18px; }
+
+/* Carrito */
+.item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea); align-items: start; }
+.item-img { position: relative; aspect-ratio: 4 / 5; background: var(--carbon); border: 1px solid var(--linea); overflow: hidden; }
+.item-img img { width: 100%; height: 100%; object-fit: cover; }
+.item-img .ph svg { width: 60%; }
+.item-img .ph span { display: none; }
+.item-name { font-weight: 600; font-size: 14px; line-height: 1.3; }
+.qty { display: inline-flex; align-items: center; border: 1px solid var(--linea); margin-top: 8px; }
+.qty button { width: 36px; height: 36px; background: none; border: 0; font-size: 16px; }
+.qty button:disabled { opacity: .3; cursor: default; }
+.qty span { min-width: 28px; text-align: center; font-family: var(--f-codigo); }
+.quitar { background: none; border: 0; color: var(--humo); font-family: var(--f-codigo); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 0; margin-top: 6px; }
+.quitar:hover { color: var(--alerta); }
+.vacio { text-align: center; padding: 40px 0; color: var(--humo); }
+.vacio strong { display: block; font-family: var(--f-display); font-weight: 400; font-size: 28px; color: var(--blanco); text-transform: uppercase; margin-bottom: 6px; }
+.totales { display: grid; gap: 6px; padding: 16px 0; font-variant-numeric: tabular-nums; }
+.totales div { display: flex; justify-content: space-between; gap: 12px; }
+.totales .total { font-family: var(--f-display); font-size: 26px; text-transform: uppercase; }
+.totales .anticipo { color: var(--olivo); font-family: var(--f-codigo); font-weight: 600; }
+.datos { display: grid; gap: 12px; padding: 16px 0; border-top: 1px solid var(--linea); }
+.campo { display: grid; gap: 6px; }
+.campo label { font-family: var(--f-codigo); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--humo); }
+.campo input, .campo select {
+  min-height: 48px; padding: 0 14px; background: var(--carbon); border: 1px solid var(--linea); color: var(--blanco);
+  font: inherit; font-size: 16px; border-radius: 0; -webkit-appearance: none; appearance: none;
+}
+.campo input:focus, .campo select:focus { outline: none; border-color: var(--hueso); }
+.mini-reglas { font-size: 13px; color: #cfcfcf; display: grid; gap: 6px; padding: 14px; border: 1px solid var(--linea); background: var(--carbon); }
+.mini-reglas b { color: var(--hueso); font-weight: 600; }
+.copia { margin-top: 10px; font-size: 12px; color: var(--humo); text-align: center; }
+.copia button { background: none; border: 0; padding: 0; color: var(--blanco); text-decoration: underline; font-size: 12px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 70;
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: var(--hueso); color: #0d0d0d; padding: 12px 18px;
+  font-family: var(--f-codigo); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  transition: opacity .2s, transform .2s; white-space: nowrap;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+.demo-bar { background: #1c1c1c; border-bottom: 1px solid var(--linea); text-align: center; padding: 8px var(--gutter); font-family: var(--f-codigo); font-size: 11px; letter-spacing: .08em; color: var(--humo); }
+
+/* ---------- Pantallas grandes ---------- */
+@media (min-width: 720px) {
+  :root { --gutter: 28px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 18px; }
+  .scroller { grid-auto-columns: 32%; }
+  .familia .scroller { grid-auto-columns: 34%; }
+  .manifiesto-lista { grid-template-columns: repeat(3, 1fr); }
+  .pasos { grid-template-columns: repeat(2, 1fr); column-gap: 28px; }
+  .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  .panel { left: auto; top: 0; width: min(460px, 100%); max-height: none; border-top: 0; border-left: 1px solid var(--linea); transform: translateX(105%); }
+  .panel.on { transform: none; }
+  .ficha-img { max-height: 58vh; }
+}
+@media (min-width: 1000px) {
+  .nav { display: flex; }
+  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .scroller { grid-auto-columns: 24%; }
+  .hero-foto { display: none; }
+  .hero-txt { position: static; padding: 0; }
+  .hero-desk { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-block: 64px; }
+  .hero h1 { font-size: clamp(72px, 8vw, 118px); }
+  .hero-collage { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .hero-collage img { aspect-ratio: 4 / 5; width: 100%; object-fit: cover; border: 1px solid var(--linea); }
+  .hero-collage img:nth-child(1) { grid-row: span 2; align-self: center; }
+  .pasos { grid-template-columns: repeat(4, 1fr); }
+  .pasos li { grid-template-columns: 1fr; gap: 10px; }
+  .fab { display: none; }
+  .footer { padding-block: 56px; }
+}
+@media (max-width: 999px) { .hero-desk { display: contents; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<div id="demoBar" class="demo-bar" hidden>Mostrando productos de ejemplo · conecta tu Google Sheet en CONFIG</div>
+
+<header class="header">
+  <div class="wrap">
+    <a class="logo" href="#inicio" aria-label="INSANITY, inicio">
+      <span class="logo-word">INSA<br>NITY</span>
+    </a>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#top">Lo más pesado</a>
+      <a href="#aromas">Aromas</a>
+      <a href="#catalogo">Catálogo</a>
+      <a href="#comprar">Cómo comprar</a>
+    </nav>
+    <button class="cart-btn" id="cartTop" type="button" aria-label="Abrir carrito">
+      CARRITO <span class="badge cero" data-count>0</span>
+    </button>
+  </div>
+</header>
+
+<main id="inicio">
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero-foto"><img src="img/familia/familia-1.jpg" alt="Chica con playera negra oversize y cargo olivo caminando en la calle al atardecer"></div>
+    <div class="wrap hero-desk">
+      <div class="hero-txt">
+        <span class="mono eyebrow">// Streetwear · Accesorios · Aromas</span>
+        <h1>Rompe la simulación.</h1>
+        <p>Piezas seleccionadas una por una. Calidad premium sin precios de plaza comercial.</p>
+        <a class="btn btn-neon" href="#catalogo">Entra a La Familia</a>
+      </div>
+      <div class="hero-collage" aria-hidden="true">
+        <img src="img/familia/familia-1.jpg" alt="">
+        <img src="img/familia/familia-2.jpg" alt="">
+        <img src="img/familia/familia-3.jpg" alt="">
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TOP ===== -->
+  <section class="seccion" id="top">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><span class="mono muted">Lo que más se mueve</span><h2>Lo más pesado</h2></div>
+      </div>
+      <div class="grid" id="gridTop"></div>
+    </div>
+  </section>
+
+  <!-- ===== AROMAS ===== -->
+  <section class="seccion aromas" id="aromas">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><span class="mono eyebrow">Producto estrella</span><h2>Aromas Insanity</h2></div>
+        <span class="mono muted">Desliza →</span>
+      </div>
+      <p class="aromas-intro">Mini perfumes de 30 ml y de bolsillo. Cabe en la bandolera y dura todo el día.</p>
+      <div class="scroller" id="scrollAromas"></div>
+    </div>
+  </section>
+
+  <!-- ===== CATÁLOGO ===== -->
+  <section class="seccion" id="catalogo">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><span class="mono muted">Todo lo disponible</span><h2>El catálogo</h2></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="wrap tabs-in" id="tabs" role="toolbar" aria-label="Filtrar por categoría"></div>
+    </div>
+    <div class="wrap">
+      <div class="grid" id="gridCatalogo"></div>
+    </div>
+  </section>
+
+  <!-- ===== LA FAMILIA ===== -->
+  <section class="seccion familia" id="familia">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><span class="mono muted">Así se ve en la calle</span><h2>La Familia</h2></div>
+        <span class="mono muted">Desliza →</span>
+      </div>
+      <div class="scroller">
+        <figure><img src="img/familia/familia-1.jpg" alt="Outfit con playera negra y cargo olivo" loading="lazy"></figure>
+        <figure><img src="img/familia/familia-2.jpg" alt="Conjunto beige de playera y short en una azotea" loading="lazy"></figure>
+        <figure><img src="img/familia/familia-3.jpg" alt="Playera negra con estampado frente a un mural" loading="lazy"></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MANIFIESTO ===== -->
+  <section class="seccion" id="manifiesto">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><span class="mono muted">Quiénes somos</span><h2>El manifiesto</h2></div>
+      </div>
+      <div class="manifiesto-lista">
+        <div><span class="mono eyebrow">El origen</span><h3>Nacimos del hustle</h3><p>Insanity sale de la calle, para quien exige calidad premium sin pagar los precios inflados de las plazas.</p></div>
+        <div><span class="mono eyebrow">La visión</span><h3>Ser el referente</h3><p>Queremos ser la referencia de la cultura urbana. Cada pieza es exclusiva y se elige con cuidado.</p></div>
+        <div><span class="mono eyebrow">El lazo</span><h3>Aquí no hay clientes</h3><p>Hay Familia. Cuando usas Insanity, ya eres parte.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CÓMO COMPRAR ===== -->
+  <section class="seccion" id="comprar">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><span class="mono muted">Cero simulación</span><h2>Cómo comprar</h2></div>
+      </div>
+      <ol class="pasos">
+        <li><div><h3>Arma tu carrito</h3><p>Elige tus piezas y tu talla.</p></div></li>
+        <li><div><h3>Envía por WhatsApp</h3><p>Tu pedido llega completo a nuestro WhatsApp. Te atiende una persona real.</p></div></li>
+        <li><div><h3>Aparta con 50%</h3><p>Asegura tu mercancía con la mitad por transferencia.</p></div></li>
+        <li><div><h3>Recibe y liquida</h3><p>Entregamos en persona y pagas el resto al recibir.</p></div></li>
+      </ol>
+      <div class="reglas">
+        <p><strong>Apartado:</strong> 50% de anticipo por transferencia para separar tus piezas.</p>
+        <p><strong>Entrega:</strong> <span data-entrega>1 a 4 días</span> después de tu anticipo, en <span data-zonas>Cuernavaca y Jiutepec</span>.</p>
+        <p><strong>Liquidación:</strong> el resto se paga el día de la entrega, en efectivo o transferencia.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">INSA<br>NITY</div>
+        <p class="muted" style="max-width:30ch;margin:14px 0 0">Menos ruido, más estilo. Cuernavaca, Morelos.</p>
+      </div>
+      <div>
+        <h4>Tienda</h4>
+        <ul><li><a href="#top">Lo más pesado</a></li><li><a href="#aromas">Aromas</a></li><li><a href="#catalogo">Catálogo</a></li></ul>
+      </div>
+      <div>
+        <h4>Info</h4>
+        <ul><li><a href="#comprar">Cómo comprar</a></li><li><a href="#comprar">Apartados y entregas</a></li><li><a href="#manifiesto">Manifiesto</a></li></ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul>
+          <li><a id="linkSoporte" href="#" target="_blank" rel="noopener">WhatsApp · <span data-tel></span></a></li>
+          <li><a id="linkInsta" href="#" target="_blank" rel="noopener">Instagram</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom mono muted">
+      <span>© <span id="anio"></span> Insanity</span>
+      <span>We are the glitch</span>
+    </div>
+  </div>
+</footer>
+
+<button class="fab" id="cartFab" type="button" aria-label="Abrir carrito">CARRITO <span class="badge cero" data-count>0</span></button>
+
+<!-- Paneles -->
+<div class="velo" id="velo"></div>
+
+<aside class="panel" id="panelFicha" aria-modal="true" role="dialog" aria-labelledby="fichaTitulo" hidden>
+  <div class="panel-head"><span class="mono muted" id="fichaCodigo"></span><button class="cerrar" type="button" data-cerrar aria-label="Cerrar">✕</button></div>
+  <div class="panel-body"><div class="ficha" id="fichaBody"></div></div>
+  <div class="panel-foot"><button class="btn btn-neon btn-full" id="btnAgregar" type="button">Agregar al carrito</button></div>
+</aside>
+
+<aside class="panel" id="panelCarrito" aria-modal="true" role="dialog" aria-labelledby="carritoTitulo" hidden>
+  <div class="panel-head"><h3 id="carritoTitulo">Tu carrito</h3><button class="cerrar" type="button" data-cerrar aria-label="Cerrar">✕</button></div>
+  <div class="panel-body" id="carritoBody"></div>
+  <div class="panel-foot" id="carritoFoot"></div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN — lo único que necesitas editar
+   ========================================================= */
+const CONFIG = {
+  whatsapp: "527779064444",      // 52 + número a 10 dígitos
+  sheetCSV: "",                  // pega aquí el link CSV publicado de tu Google Sheet
+  carpetaFotos: "img/productos/",// las fotos se llaman igual que el código: INS-B002.jpg
+  anticipo: 0.5,
+  entrega: "1 a 4 días",
+  zonas: ["Cuernavaca", "Jiutepec"],
+  instagram: "https://instagram.com/"
+};
+
+/* Productos de ejemplo: se usan solo si no hay Sheet conectada */
+const EJEMPLO = [
+  { codigo:"INS-B002", nombre:"Playera Oversize Gótica", categoria:"streetwear", precio:450, tallas:"S,M,L", stock:2, top:true },
+  { codigo:"INS-B007", nombre:"Conjunto Beige Playera + Short", categoria:"streetwear", precio:780, tallas:"M,L", stock:1, top:true },
+  { codigo:"INS-P001", nombre:"Aroma Insanity Glitch 30 ml", categoria:"aromas", precio:320, tallas:"", stock:6, top:true },
+  { codigo:"INS-C003", nombre:"Bandolera Táctica Negra", categoria:"equipaje", precio:390, tallas:"", stock:3, top:true },
+  { codigo:"INS-B011", nombre:"Cargo Pants Olivo", categoria:"streetwear", precio:620, tallas:"28,30,32", stock:2 },
+  { codigo:"INS-B014", nombre:"Croptop Negro Básico", categoria:"streetwear", precio:290, tallas:"CH,M", stock:4 },
+  { codigo:"INS-B019", nombre:"Playera Estampado Ángel", categoria:"streetwear", precio:480, tallas:"M,L,XL", stock:0 },
+  { codigo:"INS-C006", nombre:"Crossbody Mini Monograma", categoria:"equipaje", precio:450, tallas:"", stock:1 },
+  { codigo:"INS-C009", nombre:"Bolsa Tote Urbana", categoria:"equipaje", precio:520, tallas:"", stock:2 },
+  { codigo:"INS-P002", nombre:"Aroma Insanity Noche 30 ml", categoria:"aromas", precio:320, tallas:"", stock:4 },
+  { codigo:"INS-P003", nombre:"Aroma Insanity Calle 30 ml", categoria:"aromas", precio:320, tallas:"", stock:1 },
+  { codigo:"INS-P004", nombre:"Aroma de Bolsillo 10 ml", categoria:"aromas", precio:160, tallas:"", stock:8 }
+];
+
+const CATEGORIAS = {
+  streetwear: { nombre: "Streetwear", icono: "playera" },
+  equipaje:   { nombre: "Equipaje Urbano", icono: "bolsa" },
+  aromas:     { nombre: "Aromas", icono: "perfume" }
+};
+
+/* ---------- utilidades ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const dinero = n => "$" + Math.round(n).toLocaleString("es-MX");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const sinAcentos = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+const ICONOS = {
+  playera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 8l-14 8 5 11 6-3v32h26V24l6 3 5-11-14-8c-1 4-5 7-10 7s-9-3-10-7z"/></svg>',
+  bolsa:   '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 26h44v28H10z"/><path d="M14 26L26 6M50 26L38 6"/><path d="M10 34h44"/></svg>',
+  perfume: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M26 6h12v8H26z"/><path d="M29 14v6M35 14v6"/><path d="M18 20h28v38H18z"/><path d="M24 34h16v12H24z"/></svg>'
+};
+
+function categoriaDe(txt) {
+  const t = sinAcentos(txt);
+  if (t.includes("aroma") || t.includes("perfum")) return "aromas";
+  if (t.includes("equipaje") || t.includes("bolsa") || t.includes("bandolera") || t.includes("crossbody")) return "equipaje";
+  return "streetwear";
+}
+
+function imagenHTML(p, conCodigo = true) {
+  const ph = `<div class="ph">${ICONOS[CATEGORIAS[p.categoria].icono]}${conCodigo ? `<span>${esc(p.codigo)}</span>` : ""}</div>`;
+  if (!p.foto) return ph;
+  return `${ph}<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" loading="lazy" onerror="this.remove()">`;
+}
+
+function estadoStock(p) {
+  if (p.stock <= 0) return { clase: "agotado", txt: "Agotado" };
+  if (p.stock === 1) return { clase: "ultima", txt: "Última pieza" };
+  if (p.stock <= 3) return { clase: "", txt: `Quedan ${p.stock}` };
+  return null;
+}
+
+/* ---------- datos ---------- */
+let PRODUCTOS = [];
+
+function parseCSV(texto) {
+  const filas = []; let fila = [], campo = "", comillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (comillas) {
+      if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+      else if (c === '"') comillas = false;
+      else campo += c;
+    } else if (c === '"') comillas = true;
+    else if (c === ",") { fila.push(campo); campo = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && texto[i + 1] === "\n") i++;
+      fila.push(campo); filas.push(fila); fila = []; campo = "";
+    } else campo += c;
+  }
+  if (campo || fila.length) { fila.push(campo); filas.push(fila); }
+  return filas.filter(f => f.some(x => x.trim() !== ""));
+}
+
+function normalizar(p, desdeSheet) {
+  const si = v => ["si", "sí", "x", "1", "true", "yes"].includes(sinAcentos(v));
+  const codigo = String(p.codigo || "").trim().toUpperCase();
+  let foto = p.foto ? String(p.foto).trim() : "";
+  if (desdeSheet && !foto && codigo) foto = CONFIG.carpetaFotos + codigo + ".jpg";
+  else if (foto && !/^https?:|^\/|^img\//i.test(foto)) foto = CONFIG.carpetaFotos + foto;
+  return {
+    codigo,
+    nombre: String(p.nombre || codigo).trim(),
+    categoria: categoriaDe(p.categoria),
+    precio: Number(String(p.precio).replace(/[^0-9.]/g, "")) || 0,
+    tallas: String(p.tallas || "").split(/[,/]/).map(t => t.trim()).filter(t => t && !/^(unica|única|n\/a|-)$/i.test(t)),
+    stock: Math.max(0, parseInt(p.stock, 10) || 0),
+    top: typeof p.top === "boolean" ? p.top : si(p.top),
+    activo: p.activo === undefined || p.activo === "" ? true : (typeof p.activo === "boolean" ? p.activo : si(p.activo)),
+    foto
+  };
+}
+
+async function cargarProductos() {
+  if (CONFIG.sheetCSV) {
+    try {
+      const r = await fetch(CONFIG.sheetCSV, { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const filas = parseCSV(await r.text());
+      const cab = filas.shift().map(sinAcentos);
+      const lista = filas.map(f => Object.fromEntries(cab.map((k, i) => [k, f[i] ?? ""])))
+        .map(o => normalizar(o, true))
+        .filter(p => p.codigo && p.activo);
+      if (lista.length) return lista;
+    } catch (e) { console.warn("No se pudo leer la Sheet, uso ejemplos.", e); }
+  }
+  $("#demoBar").hidden = false;
+  return EJEMPLO.map(p => normalizar(p, false));
+}
+
+/* ---------- render de tarjetas ---------- */
+function tarjeta(p) {
+  const est = estadoStock(p);
+  return `<button class="card${p.stock <= 0 ? " sold" : ""}" type="button" data-codigo="${esc(p.codigo)}">
+    <div class="card-img">${imagenHTML(p)}${est ? `<span class="card-tag ${est.clase}">${est.txt}</span>` : ""}</div>
+    <div class="card-info">
+      <span class="mono muted">${esc(CATEGORIAS[p.categoria].nombre)}</span>
+      <span class="card-name">${esc(p.nombre)}</span>
+      <div class="card-row"><span class="precio">${dinero(p.precio)}</span></div>
+    </div>
+  </button>`;
+}
+
+const ordenar = lista => [...lista].sort((a, b) => (a.stock <= 0) - (b.stock <= 0));
+let filtro = "todo";
+
+function renderTop() {
+  let top = PRODUCTOS.filter(p => p.top && p.stock > 0);
+  if (top.length < 4) top = top.concat(PRODUCTOS.filter(p => !top.includes(p) && p.stock > 0)).slice(0, 4);
+  $("#gridTop").innerHTML = top.slice(0, 4).map(tarjeta).join("");
+}
+function renderAromas() {
+  const a = ordenar(PRODUCTOS.filter(p => p.categoria === "aromas"));
+  $("#aromas").hidden = !a.length;
+  $("#scrollAromas").innerHTML = a.map(tarjeta).join("");
+}
+function renderTabs() {
+  const cuenta = k => k === "todo" ? PRODUCTOS.length : PRODUCTOS.filter(p => p.categoria === k).length;
+  const opciones = [["todo", "Todo"], ...Object.entries(CATEGORIAS).map(([k, v]) => [k, v.nombre])];
+  $("#tabs").innerHTML = opciones.map(([k, n]) =>
+    `<button class="tab" type="button" data-filtro="${k}" aria-pressed="${filtro === k}">${n}<span class="n">${cuenta(k)}</span></button>`).join("");
+}
+function renderCatalogo() {
+  const lista = ordenar(filtro === "todo" ? PRODUCTOS : PRODUCTOS.filter(p => p.categoria === filtro));
+  $("#gridCatalogo").innerHTML = lista.map(tarjeta).join("");
+}
+
+/* ---------- carrito ---------- */
+let carrito = [];
+try { carrito = JSON.parse(localStorage.getItem("insanity-carrito") || "[]"); } catch (e) { carrito = []; }
+const guardar = () => { try { localStorage.setItem("insanity-carrito", JSON.stringify(carrito)); } catch (e) {} };
+const buscar = c => PRODUCTOS.find(p => p.codigo === c);
+const enCarrito = codigo => carrito.filter(i => i.codigo === codigo).reduce((s, i) => s + i.cant, 0);
+
+function limpiarCarrito() {
+  carrito = carrito.filter(i => buscar(i.codigo) && buscar(i.codigo).stock > 0);
+  carrito.forEach(i => { const p = buscar(i.codigo); if (enCarrito(i.codigo) > p.stock) i.cant = Math.max(1, i.cant - (enCarrito(i.codigo) - p.stock)); });
+  guardar();
+}
+
+function actualizarContador() {
+  const n = carrito.reduce((s, i) => s + i.cant, 0);
+  $$("[data-count]").forEach(b => { b.textContent = n; b.classList.toggle("cero", n === 0); });
+}
+
+function agregar(codigo, talla) {
+  const p = buscar(codigo);
+  if (!p || enCarrito(codigo) >= p.stock) return false;
+  const ex = carrito.find(i => i.codigo === codigo && i.talla === talla);
+  ex ? ex.cant++ : carrito.push({ codigo, talla, cant: 1 });
+  guardar(); actualizarContador();
+  const fab = $("#cartFab"); fab.classList.remove("pulse"); void fab.offsetWidth; fab.classList.add("pulse");
+  return true;
+}
+
+function totales() {
+  const total = carrito.reduce((s, i) => s + buscar(i.codigo).precio * i.cant, 0);
+  const anticipo = Math.ceil(total * CONFIG.anticipo);
+  return { total, anticipo, resto: total - anticipo };
+}
+
+let datosEntrega = { nombre: "", zona: "" };
+try { datosEntrega = Object.assign(datosEntrega, JSON.parse(localStorage.getItem("insanity-datos") || "{}")); } catch (e) {}
+
+function mensajeWhatsApp() {
+  const t = totales();
+  const lineas = carrito.map(i => {
+    const p = buscar(i.codigo);
+    return `• ${i.cant}x ${p.nombre} (${p.codigo})${i.talla ? " · Talla " + i.talla : ""} — ${dinero(p.precio * i.cant)}`;
+  });
+  return [
+    "🔥 *PEDIDO INSANITY*",
+    datosEntrega.nombre ? `Nombre: ${datosEntrega.nombre}` : "",
+    datosEntrega.zona ? `Zona de entrega: ${datosEntrega.zona}` : "",
+    "",
+    ...lineas,
+    "",
+    `*TOTAL: ${dinero(t.total)} MXN*`,
+    `Anticipo 50%: ${dinero(t.anticipo)} por transferencia`,
+    `Restante: ${dinero(t.resto)} al recibir (efectivo o transferencia)`,
+    `Entrega: ${CONFIG.entrega}`,
+    "",
+    "Quiero apartar mi pedido. ¿Me pasas los datos para el anticipo?"
+  ].filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n");
+}
+
+function renderCarrito() {
+  const body = $("#carritoBody"), foot = $("#carritoFoot");
+  if (!carrito.length) {
+    body.innerHTML = `<div class="vacio"><strong>Carrito vacío</strong>Todavía no eliges nada.</div>`;
+    foot.innerHTML = `<a class="btn btn-linea btn-full" href="#catalogo" data-cerrar>Ver catálogo</a>`;
+    return;
+  }
+  const t = totales();
+  const zonas = CONFIG.zonas.map(z => `<option${datosEntrega.zona === z ? " selected" : ""}>${esc(z)}</option>`).join("");
+  body.innerHTML = carrito.map((i, idx) => {
+    const p = buscar(i.codigo);
+    const lleno = enCarrito(p.codigo) >= p.stock;
+    return `<div class="item">
+      <div class="item-img">${imagenHTML(p, false)}</div>
+      <div>
+        <div class="item-name">${esc(p.nombre)}</div>
+        <div class="mono muted">${esc(p.codigo)}${i.talla ? " · Talla " + esc(i.talla) : ""}</div>
+        <div class="qty"><button type="button" data-menos="${idx}" aria-label="Quitar uno">−</button><span>${i.cant}</span><button type="button" data-mas="${idx}" aria-label="Agregar uno" ${lleno ? "disabled" : ""}>+</button></div>
+        <div><button class="quitar" type="button" data-quitar="${idx}">Quitar</button></div>
+      </div>
+      <span class="precio">${dinero(p.precio * i.cant)}</span>
+    </div>`;
+  }).join("") + `
+    <div class="totales">
+      <div><span>Total</span><span class="total">${dinero(t.total)}</span></div>
+      <div><span>Anticipo para apartar (50%)</span><span class="anticipo">${dinero(t.anticipo)}</span></div>
+      <div class="muted"><span>Pagas al recibir</span><span>${dinero(t.resto)}</span></div>
+    </div>
+    <div class="datos">
+      <div class="campo"><label for="inNombre">Tu nombre</label><input id="inNombre" autocomplete="name" placeholder="Cómo te llamas" value="${esc(datosEntrega.nombre)}"></div>
+      <div class="campo"><label for="inZona">Zona de entrega</label><select id="inZona"><option value="">Elige tu zona</option>${zonas}</select></div>
+      <div class="mini-reglas">
+        <span>Se aparta con el <b>50%</b> por transferencia.</span>
+        <span>Entregamos en <b>${esc(CONFIG.entrega)}</b> en ${esc(CONFIG.zonas.join(" y "))}.</span>
+        <span>El resto lo pagas <b>el día de la entrega</b>.</span>
+      </div>
+    </div>`;
+  const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp())}`;
+  foot.innerHTML = `<a class="btn btn-neon btn-full" id="btnWhats" href="${url}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+    <div class="copia">¿No se abrió WhatsApp? <button type="button" id="btnCopiar">Copia el pedido</button> y mándalo al ${esc(telVisible())}</div>`;
+}
+
+function refrescarLinkWhats() {
+  const a = $("#btnWhats");
+  if (a) a.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp())}`;
+}
+
+/* ---------- paneles ---------- */
+let abierto = null;
+function abrir(panel) {
+  cerrar(true);
+  panel.hidden = false;
+  requestAnimationFrame(() => { panel.classList.add("on"); $("#velo").classList.add("on"); });
+  document.body.style.overflow = "hidden";
+  abierto = panel;
+  setTimeout(() => $(".cerrar", panel)?.focus({ preventScroll: true }), 50);
+}
+function cerrar(rapido) {
+  if (!abierto) return;
+  const p = abierto; abierto = null;
+  p.classList.remove("on"); $("#velo").classList.remove("on");
+  document.body.style.overflow = "";
+  setTimeout(() => { if (abierto !== p) p.hidden = true; }, rapido ? 0 : 300);
+}
+
+let fichaActual = null, tallaElegida = null;
+function abrirFicha(codigo) {
+  const p = buscar(codigo); if (!p) return;
+  fichaActual = p; tallaElegida = p.tallas.length === 1 ? p.tallas[0] : null;
+  const est = estadoStock(p);
+  $("#fichaCodigo").textContent = p.codigo;
+  $("#fichaBody").innerHTML = `
+    <div class="ficha-img">${imagenHTML(p)}</div>
+    <div>
+      <span class="mono muted">${esc(CATEGORIAS[p.categoria].nombre)}</span>
+      <h4 id="fichaTitulo">${esc(p.nombre)}</h4>
+      <span class="precio">${dinero(p.precio)}</span>
+      <div class="stock-line"><span class="dot${p.stock <= 0 ? " rojo" : ""}"></span>${p.stock <= 0 ? "Agotado por ahora" : est ? est.txt : "Disponible"}</div>
+    </div>
+    ${p.tallas.length ? `<div><span class="mono muted">Talla</span><div class="tallas">${p.tallas.map(t =>
+      `<button class="talla" type="button" data-talla="${esc(t)}" aria-pressed="${tallaElegida === t}">${esc(t)}</button>`).join("")}</div><div class="aviso" id="avisoTalla"></div></div>` : ""}`;
+  actualizarBotonAgregar();
+  abrir($("#panelFicha"));
+}
+function actualizarBotonAgregar() {
+  const b = $("#btnAgregar"), p = fichaActual;
+  if (p.stock <= 0) { b.textContent = "Agotado"; b.disabled = true; return; }
+  if (enCarrito(p.codigo) >= p.stock) { b.textContent = "Ya tienes todas las piezas"; b.disabled = true; return; }
+  b.disabled = false; b.textContent = "Agregar al carrito · " + dinero(p.precio);
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 1800); }
+
+function telVisible() { const n = CONFIG.whatsapp.slice(-10); return `${n.slice(0,3)} ${n.slice(3,6)} ${n.slice(6)}`; }
+
+/* ---------- eventos ---------- */
+document.addEventListener("click", e => {
+  const card = e.target.closest(".card"); if (card) return abrirFicha(card.dataset.codigo);
+  const tab = e.target.closest("[data-filtro]"); if (tab) { filtro = tab.dataset.filtro; renderTabs(); renderCatalogo(); return; }
+  if (e.target.closest("#cartTop, #cartFab")) { renderCarrito(); return abrir($("#panelCarrito")); }
+  if (e.target.closest("[data-cerrar]") || e.target.id === "velo") return cerrar();
+  const talla = e.target.closest("[data-talla]");
+  if (talla) { tallaElegida = talla.dataset.talla; $$("[data-talla]").forEach(b => b.setAttribute("aria-pressed", b === talla)); $("#avisoTalla").textContent = ""; return; }
+  if (e.target.closest("#btnAgregar")) {
+    const p = fichaActual;
+    if (p.tallas.length && !tallaElegida) { $("#avisoTalla").textContent = "Elige una talla para continuar."; return; }
+    if (agregar(p.codigo, tallaElegida)) { toast("Agregado al carrito"); cerrar(); }
+    return;
+  }
+  const mas = e.target.closest("[data-mas]"), menos = e.target.closest("[data-menos]"), quitar = e.target.closest("[data-quitar]");
+  if (mas || menos || quitar) {
+    const idx = +(mas || menos || quitar).dataset[mas ? "mas" : menos ? "menos" : "quitar"];
+    const i = carrito[idx];
+    if (mas && enCarrito(i.codigo) < buscar(i.codigo).stock) i.cant++;
+    if (menos) i.cant--;
+    if (quitar || i.cant <= 0) carrito.splice(idx, 1);
+    guardar(); actualizarContador(); renderCarrito(); return;
+  }
+  if (e.target.closest("#btnCopiar")) {
+    const txt = mensajeWhatsApp();
+    navigator.clipboard?.writeText(txt).then(() => toast("Pedido copiado"), () => toast("No se pudo copiar"));
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "inNombre") datosEntrega.nombre = e.target.value.trim();
+  if (e.target.id === "inZona") datosEntrega.zona = e.target.value;
+  if (e.target.id === "inNombre" || e.target.id === "inZona") {
+    try { localStorage.setItem("insanity-datos", JSON.stringify(datosEntrega)); } catch (err) {}
+    refrescarLinkWhats();
+  }
+});
+document.addEventListener("change", e => { if (e.target.id === "inZona") { datosEntrega.zona = e.target.value; refrescarLinkWhats(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
+
+/* ---------- arranque ---------- */
+(async function iniciar() {
+  $("#anio").textContent = new Date().getFullYear();
+  $$("[data-entrega]").forEach(el => el.textContent = CONFIG.entrega);
+  $$("[data-zonas]").forEach(el => el.textContent = CONFIG.zonas.join(" y "));
+  $$("[data-tel]").forEach(el => el.textContent = telVisible());
+  $("#linkSoporte").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Hola Insanity, tengo una duda.")}`;
+  $("#linkInsta").href = CONFIG.instagram;
+  PRODUCTOS = await cargarProductos();
+  limpiarCarrito(); actualizarContador();
+  renderTop(); renderAromas(); renderTabs(); renderCatalogo();
+})();
+</script>
+</body>
+</html>
