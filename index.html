@@ -575,12 +575,12 @@ const EJEMPLO = [
   { codigo:"INS-B002", nombre:"Playera Oversize Gótica", categoria:"streetwear", precio:450, tallas:"S:1, M:2, L:0", stock:"", top:true },
   { codigo:"INS-B007", nombre:"Conjunto Beige Playera + Short", categoria:"streetwear", precio:780, tallas:"M,L", stock:1, top:true },
   { codigo:"INS-P001", nombre:"Aroma Glitch 30 ml", categoria:"Aromas Caballero", precio:70, tallas:"", stock:25, top:true },
-  { codigo:"INS-C003", nombre:"Bandolera Táctica Negra", categoria:"equipaje", precio:390, tallas:"", stock:3, top:true },
+  { codigo:"INS-C003", nombre:"Bandolera Táctica Negra", categoria:"Bandoleras", precio:390, tallas:"", stock:3, top:true },
   { codigo:"INS-B011", nombre:"Cargo Pants Olivo", categoria:"streetwear", precio:620, tallas:"28,30,32", stock:2 },
   { codigo:"INS-B014", nombre:"Croptop Negro Básico", categoria:"streetwear", precio:290, tallas:"CH,M", stock:4 },
   { codigo:"INS-B019", nombre:"Playera Estampado Ángel", categoria:"streetwear", precio:480, tallas:"M,L,XL", stock:0 },
-  { codigo:"INS-C006", nombre:"Crossbody Mini Monograma", categoria:"equipaje", precio:450, tallas:"", stock:1 },
-  { codigo:"INS-C009", nombre:"Bolsa Tote Urbana", categoria:"equipaje", precio:520, tallas:"", stock:2 },
+  { codigo:"INS-C006", nombre:"Crossbody Mini Monograma", categoria:"Bandoleras", precio:450, tallas:"", stock:1 },
+  { codigo:"INS-C009", nombre:"Bolsa Tote Urbana", categoria:"Bolsas", precio:520, tallas:"", stock:2 },
   { codigo:"INS-P002", nombre:"Aroma Noche 30 ml", categoria:"Aromas Dama", precio:70, tallas:"", stock:20 },
   { codigo:"INS-P003", nombre:"Aroma Calle 30 ml", categoria:"Aromas Caballero", precio:60, tallas:"", stock:15 },
   { codigo:"INS-P004", nombre:"Aroma Seda 30 ml", categoria:"Aromas Dama", precio:60, tallas:"", stock:18 },
@@ -590,7 +590,8 @@ const EJEMPLO = [
 
 const CATEGORIAS = {
   streetwear: { nombre: "Streetwear", icono: "playera" },
-  equipaje:   { nombre: "Equipaje Urbano", icono: "bolsa" },
+  bandoleras: { nombre: "Bandoleras", icono: "bandolera" },
+  bolsas:     { nombre: "Bolsas", icono: "bolsa" },
   aromas:     { nombre: "Aromas", icono: "perfume" }
 };
 
@@ -604,6 +605,7 @@ const sinAcentos = s => String(s || "").toLowerCase().normalize("NFD").replace(/
 const ICONOS = {
   playera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 8l-14 8 5 11 6-3v32h26V24l6 3 5-11-14-8c-1 4-5 7-10 7s-9-3-10-7z"/></svg>',
   bolsa:   '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 26h44v28H10z"/><path d="M14 26L26 6M50 26L38 6"/><path d="M10 34h44"/></svg>',
+  bandolera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 30h36v22H14z"/><path d="M14 38h36"/><path d="M16 30L44 6M48 30L20 6" stroke-dasharray="2 3"/></svg>',
   perfume: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M26 6h12v8H26z"/><path d="M29 14v6M35 14v6"/><path d="M18 20h28v38H18z"/><path d="M24 34h16v12H24z"/></svg>'
 };
 
@@ -632,7 +634,8 @@ function leerTallas(txt, stockTxt) {
 function categoriaDe(txt) {
   const t = sinAcentos(txt);
   if (t.includes("aroma") || t.includes("perfum") || t.includes("bolsillo") || t.includes("lapiz")) return "aromas";
-  if (t.includes("equipaje") || t.includes("bolsa") || t.includes("bandolera") || t.includes("crossbody")) return "equipaje";
+  if (t.includes("bandolera") || t.includes("crossbody") || t.includes("equipaje")) return "bandoleras";
+  if (t.includes("bolsa") || t.includes("tote") || t.includes("mochila")) return "bolsas";
   return "streetwear";
 }
 
@@ -705,7 +708,7 @@ function normalizar(p, desdeSheet) {
   };
 }
 
-const DIAG = { version: "v6", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
+const DIAG = { version: "v7", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
 
 async function cargarProductos() {
   if (CONFIG.sheetCSV) {
@@ -822,7 +825,7 @@ function renderAromas() {
 }
 function renderTabs() {
   const cuenta = k => k === "todo" ? PRODUCTOS.length : PRODUCTOS.filter(p => p.categoria === k).length;
-  const opciones = [["todo", "Todo"], ...Object.entries(CATEGORIAS).map(([k, v]) => [k, v.nombre])];
+  const opciones = [["todo", "Todo"], ...Object.entries(CATEGORIAS).filter(([k]) => cuenta(k) > 0).map(([k, v]) => [k, v.nombre])];
   $("#tabs").innerHTML = opciones.map(([k, n]) =>
     `<button class="tab" type="button" data-filtro="${k}" aria-pressed="${filtro === k}">${n}<span class="n">${cuenta(k)}</span></button>`).join("");
 }
