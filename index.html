@@ -120,6 +120,9 @@ a { color: inherit; }
 .card { display: flex; flex-direction: column; gap: 10px; background: none; border: 0; padding: 0; text-align: left; min-width: 0; }
 .card-img { position: relative; aspect-ratio: 4 / 5; background: var(--carbon); border: 1px solid var(--linea); overflow: hidden; }
 .card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+/* La foto va encima del ícono de relleno; la etiqueta encima de la foto */
+.card-img img, .ficha-img img, .item-img img { position: relative; z-index: 1; }
+.card-tag { z-index: 2; }
 .card:hover .card-img img { transform: scale(1.04); }
 .card:hover .card-img { border-color: #4a4a4a; }
 .card-tag {
@@ -624,7 +627,7 @@ function normalizar(p, desdeSheet) {
   };
 }
 
-const DIAG = { version: "v3", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
+const DIAG = { version: "v4", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
 
 async function cargarProductos() {
   if (CONFIG.sheetCSV) {
