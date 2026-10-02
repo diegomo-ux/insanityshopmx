@@ -175,6 +175,40 @@ a { color: inherit; }
 .tab .n { color: var(--humo); margin-left: 6px; }
 
 /* ---------- La Familia ---------- */
+/* Filtro Dama / Caballero */
+.chips { display: flex; gap: 6px; margin: 0 0 18px; flex-wrap: wrap; }
+.chip { min-height: 38px; padding: 0 14px; background: none; border: 1px solid var(--linea); color: var(--humo); font-family: var(--f-codigo); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.chip[aria-pressed="true"] { border-color: var(--hueso); color: var(--hueso); }
+
+/* Mayoreo */
+.mayoreo { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--linea); }
+.mayoreo h3 { font-family: var(--f-display); font-weight: 400; font-size: clamp(26px, 7vw, 40px); text-transform: uppercase; margin: 6px 0 6px; line-height: 1; }
+.mayoreo > p { margin: 0 0 20px; color: #cfcfcf; max-width: 48ch; }
+.packs { display: grid; gap: 12px; }
+.pack { position: relative; display: grid; gap: 4px; padding: 20px 18px; border: 1px solid var(--linea); background: var(--carbon); text-align: left; width: 100%; }
+.pack:hover { border-color: #4a4a4a; }
+.pack.activo { border-color: var(--hueso); }
+.pack-nombre { font-family: var(--f-display); font-size: 28px; text-transform: uppercase; line-height: 1; letter-spacing: .02em; }
+.pack-detalle { font-family: var(--f-codigo); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--olivo); }
+.pack-precio { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.pack-precio .desde { font-size: 12px; color: var(--humo); }
+.pack-precio .nuevo { font-family: var(--f-codigo); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; }
+.tachado { text-decoration: line-through; color: var(--humo); font-family: var(--f-codigo); font-weight: 400; font-variant-numeric: tabular-nums; }
+.pack-sello { position: absolute; top: 12px; right: 12px; font-family: var(--f-codigo); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; background: var(--hueso); color: #0d0d0d; padding: 3px 7px; }
+.progreso { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--linea); display: grid; gap: 10px; font-size: 13px; color: #d6d6d6; }
+.progreso b { color: var(--hueso); }
+.barra { height: 3px; background: var(--linea); position: relative; overflow: hidden; }
+.barra i { position: absolute; inset: 0 auto 0 0; background: var(--olivo); transition: width .3s; }
+.precio .tachado { font-size: .85em; margin-right: 6px; }
+.descuento-linea { color: var(--olivo); font-family: var(--f-codigo); }
+
+/* Cantidad en ficha */
+.cant-ficha { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+.cant-ficha .qty { margin-top: 0; }
+.cant-ficha .qty button { width: 46px; height: 46px; font-size: 18px; }
+.cant-ficha .qty span { min-width: 40px; font-size: 16px; }
+.talla:disabled { opacity: .3; text-decoration: line-through; cursor: default; }
+
 .familia .scroller { grid-auto-columns: 72%; }
 .familia figure { margin: 0; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--linea); position: relative; }
 .familia figure img { width: 100%; height: 100%; object-fit: cover; }
@@ -299,6 +333,7 @@ a { color: inherit; }
   .scroller { grid-auto-columns: 32%; }
   .familia .scroller { grid-auto-columns: 34%; }
   .manifiesto-lista { grid-template-columns: repeat(3, 1fr); }
+  .packs { grid-template-columns: repeat(3, 1fr); }
   .pasos { grid-template-columns: repeat(2, 1fr); column-gap: 28px; }
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
   .panel { left: auto; top: 0; width: min(460px, 100%); max-height: none; border-top: 0; border-left: 1px solid var(--linea); transform: translateX(105%); }
@@ -384,7 +419,16 @@ a { color: inherit; }
         <span class="mono muted">Desliza →</span>
       </div>
       <p class="aromas-intro">Mini perfumes de 30 ml y de bolsillo. Cabe en la bandolera y dura todo el día.</p>
+      <div class="chips" id="chipsGenero" role="toolbar" aria-label="Filtrar aromas"></div>
       <div class="scroller" id="scrollAromas"></div>
+
+      <div class="mayoreo" id="mayoreo">
+        <span class="mono eyebrow">Mayoreo</span>
+        <h3>Arma tu pack</h3>
+        <p>Combina los aromas que quieras, de dama o caballero. Entre más llevas, menos pagas por pieza. El descuento se aplica solo en tu carrito.</p>
+        <div class="packs" id="packs"></div>
+        <div class="progreso" id="progresoAromas" hidden></div>
+      </div>
     </div>
   </section>
 
@@ -514,23 +558,34 @@ const CONFIG = {
   anticipo: 0.5,
   entrega: "1 a 4 días",
   zonas: ["Cuernavaca", "Jiutepec"],
-  instagram: "https://instagram.com/"
+  instagram: "https://instagram.com/",
+  // Paquetes de mayoreo de aromas. Cualquier combinación dentro de la misma línea.
+  // linea "clasico" = perfumes de 30 ml · linea "bolsillo" = tipo lápiz / de bolsillo
+  // descuento = pesos menos por pieza · precio = precio fijo del paquete completo
+  paquetes: [
+    { nombre: "Pack Bolsillo", linea: "bolsillo", cantidad: 10, precio: 250 },
+    { nombre: "Pack Hustle",   linea: "clasico",  cantidad: 10, descuento: 5 },
+    { nombre: "Pack Familia",  linea: "clasico",  cantidad: 15, descuento: 7 },
+    { nombre: "Pack Arsenal",  linea: "clasico",  cantidad: 30, descuento: 10 }
+  ]
 };
 
 /* Productos de ejemplo: se usan solo si no hay Sheet conectada */
 const EJEMPLO = [
-  { codigo:"INS-B002", nombre:"Playera Oversize Gótica", categoria:"streetwear", precio:450, tallas:"S,M,L", stock:2, top:true },
+  { codigo:"INS-B002", nombre:"Playera Oversize Gótica", categoria:"streetwear", precio:450, tallas:"S:1, M:2, L:0", stock:"", top:true },
   { codigo:"INS-B007", nombre:"Conjunto Beige Playera + Short", categoria:"streetwear", precio:780, tallas:"M,L", stock:1, top:true },
-  { codigo:"INS-P001", nombre:"Aroma Insanity Glitch 30 ml", categoria:"aromas", precio:320, tallas:"", stock:6, top:true },
+  { codigo:"INS-P001", nombre:"Aroma Glitch 30 ml", categoria:"Aromas Caballero", precio:70, tallas:"", stock:25, top:true },
   { codigo:"INS-C003", nombre:"Bandolera Táctica Negra", categoria:"equipaje", precio:390, tallas:"", stock:3, top:true },
   { codigo:"INS-B011", nombre:"Cargo Pants Olivo", categoria:"streetwear", precio:620, tallas:"28,30,32", stock:2 },
   { codigo:"INS-B014", nombre:"Croptop Negro Básico", categoria:"streetwear", precio:290, tallas:"CH,M", stock:4 },
   { codigo:"INS-B019", nombre:"Playera Estampado Ángel", categoria:"streetwear", precio:480, tallas:"M,L,XL", stock:0 },
   { codigo:"INS-C006", nombre:"Crossbody Mini Monograma", categoria:"equipaje", precio:450, tallas:"", stock:1 },
   { codigo:"INS-C009", nombre:"Bolsa Tote Urbana", categoria:"equipaje", precio:520, tallas:"", stock:2 },
-  { codigo:"INS-P002", nombre:"Aroma Insanity Noche 30 ml", categoria:"aromas", precio:320, tallas:"", stock:4 },
-  { codigo:"INS-P003", nombre:"Aroma Insanity Calle 30 ml", categoria:"aromas", precio:320, tallas:"", stock:1 },
-  { codigo:"INS-P004", nombre:"Aroma de Bolsillo 10 ml", categoria:"aromas", precio:160, tallas:"", stock:8 }
+  { codigo:"INS-P002", nombre:"Aroma Noche 30 ml", categoria:"Aromas Dama", precio:70, tallas:"", stock:20 },
+  { codigo:"INS-P003", nombre:"Aroma Calle 30 ml", categoria:"Aromas Caballero", precio:60, tallas:"", stock:15 },
+  { codigo:"INS-P004", nombre:"Aroma Seda 30 ml", categoria:"Aromas Dama", precio:60, tallas:"", stock:18 },
+  { codigo:"INS-L001", nombre:"Bolsillo Nocturno", categoria:"Bolsillo Caballero", precio:35, tallas:"", stock:30 },
+  { codigo:"INS-L002", nombre:"Bolsillo Rosa Negra", categoria:"Bolsillo Dama", precio:35, tallas:"", stock:30 }
 ];
 
 const CATEGORIAS = {
@@ -552,9 +607,31 @@ const ICONOS = {
   perfume: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M26 6h12v8H26z"/><path d="M29 14v6M35 14v6"/><path d="M18 20h28v38H18z"/><path d="M24 34h16v12H24z"/></svg>'
 };
 
+function generoDe(txt) {
+  const t = sinAcentos(txt);
+  if (t.includes("dama") || t.includes("mujer")) return "dama";
+  if (t.includes("caballero") || t.includes("hombre")) return "caballero";
+  if (t.includes("unisex")) return "unisex";
+  return "";
+}
+const GENEROS = { dama: "Dama", caballero: "Caballero", unisex: "Unisex" };
+const lineaDe = txt => /bolsillo|lapiz|pluma/.test(sinAcentos(txt)) ? "bolsillo" : "clasico";
+
+/* Tallas: "S,M,L" (stock total) o "S:1, M:2, L:0" (stock por talla) */
+function leerTallas(txt, stockTxt) {
+  const partes = String(txt || "").split(/[,/]/).map(t => t.trim()).filter(t => t && !/^(unica|única|n\/a|-)$/i.test(t));
+  if (partes.some(t => t.includes(":"))) {
+    const stockTalla = {};
+    partes.forEach(t => { const [k, v] = t.split(":"); stockTalla[k.trim().toUpperCase()] = Math.max(0, parseInt(v, 10) || 0); });
+    const tallas = Object.keys(stockTalla);
+    return { tallas, stockTalla, stock: tallas.reduce((s, k) => s + stockTalla[k], 0) };
+  }
+  return { tallas: partes, stockTalla: null, stock: Math.max(0, parseInt(stockTxt, 10) || 0) };
+}
+
 function categoriaDe(txt) {
   const t = sinAcentos(txt);
-  if (t.includes("aroma") || t.includes("perfum")) return "aromas";
+  if (t.includes("aroma") || t.includes("perfum") || t.includes("bolsillo") || t.includes("lapiz")) return "aromas";
   if (t.includes("equipaje") || t.includes("bolsa") || t.includes("bandolera") || t.includes("crossbody")) return "equipaje";
   return "streetwear";
 }
@@ -619,15 +696,16 @@ function normalizar(p, desdeSheet) {
     nombre: String(p.nombre || codigo).trim(),
     categoria: categoriaDe(p.categoria),
     precio: Number(String(p.precio).replace(/[^0-9.]/g, "")) || 0,
-    tallas: String(p.tallas || "").split(/[,/]/).map(t => t.trim()).filter(t => t && !/^(unica|única|n\/a|-)$/i.test(t)),
-    stock: Math.max(0, parseInt(p.stock, 10) || 0),
+    ...leerTallas(p.tallas, p.stock),
+    genero: generoDe(p.genero || p.categoria),
+    linea: lineaDe(p.categoria),
     top: typeof p.top === "boolean" ? p.top : si(p.top),
     activo: p.activo === undefined || p.activo === "" ? true : (typeof p.activo === "boolean" ? p.activo : si(p.activo)),
     fotos
   };
 }
 
-const DIAG = { version: "v4", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
+const DIAG = { version: "v6", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
 
 async function cargarProductos() {
   if (CONFIG.sheetCSV) {
@@ -655,11 +733,76 @@ function tarjeta(p) {
   return `<button class="card${p.stock <= 0 ? " sold" : ""}" type="button" data-codigo="${esc(p.codigo)}">
     <div class="card-img">${imagenHTML(p)}${est ? `<span class="card-tag ${est.clase}">${est.txt}</span>` : ""}</div>
     <div class="card-info">
-      <span class="mono muted">${esc(CATEGORIAS[p.categoria].nombre)}</span>
+      <span class="mono muted">${esc(etiquetaCat(p))}</span>
       <span class="card-name">${esc(p.nombre)}</span>
-      <div class="card-row"><span class="precio">${dinero(p.precio)}</span></div>
+      <div class="card-row"><span class="precio" data-precio="${esc(p.codigo)}">${precioHTML(p)}</span></div>
     </div>
   </button>`;
+}
+
+const etiquetaCat = p => (p.categoria === "aromas" && p.linea === "bolsillo" ? "Bolsillo" : CATEGORIAS[p.categoria].nombre) + (p.genero ? " · " + GENEROS[p.genero] : "");
+
+/* ---------- mayoreo ---------- */
+const LINEAS = { clasico: "aromas", bolsillo: "aromas de bolsillo" };
+const esAroma = (p, linea) => p && p.categoria === "aromas" && (!linea || p.linea === linea);
+const aromasEnCarrito = linea => carrito.filter(i => esAroma(buscar(i.codigo), linea)).reduce((s, i) => s + i.cant, 0);
+const packsDe = linea => CONFIG.paquetes.filter(k => (k.linea || "clasico") === linea).sort((a, b) => a.cantidad - b.cantidad);
+function packActivo(linea) {
+  const n = aromasEnCarrito(linea);
+  return [...packsDe(linea)].reverse().find(k => n >= k.cantidad) || null;
+}
+const unitPack = (k, base) => k.precio ? Math.min(base, k.precio / k.cantidad) : Math.max(0, base - k.descuento);
+const textoDesc = k => k.precio ? `${dinero(k.precio)} el paquete` : `−${dinero(k.descuento)} c/u`;
+function precioUnit(p) {
+  const k = p.categoria === "aromas" ? packActivo(p.linea) : null;
+  return k ? unitPack(k, p.precio) : p.precio;
+}
+function precioHTML(p, cant = 1) {
+  const u = precioUnit(p);
+  return u < p.precio ? `<span class="tachado">${dinero(p.precio * cant)}</span>${dinero(u * cant)}` : dinero(p.precio * cant);
+}
+function refrescarPrecios() {
+  $$("[data-precio]").forEach(el => { const p = buscar(el.dataset.precio); if (p) el.innerHTML = precioHTML(p); });
+}
+function renderPacks() {
+  const visibles = CONFIG.paquetes.filter(k => PRODUCTOS.some(p => esAroma(p, k.linea || "clasico") && p.stock > 0));
+  $("#mayoreo").hidden = !visibles.length;
+  if (!visibles.length) return;
+  $("#packs").innerHTML = visibles.map((k, i) => {
+    const linea = k.linea || "clasico";
+    const aromas = PRODUCTOS.filter(p => esAroma(p, linea) && p.stock > 0);
+    const min = Math.min(...aromas.map(p => p.precio));
+    const sinStock = aromas.reduce((s, p) => s + p.stock, 0) < k.cantidad;
+    const activo = packActivo(linea) === k;
+    const nuevo = k.precio ? k.precio : (min - k.descuento) * k.cantidad;
+    return `<button class="pack${activo ? " activo" : ""}" type="button" data-pack="${CONFIG.paquetes.indexOf(k)}" ${sinStock ? 'aria-disabled="true" style="opacity:.45"' : ""}>
+      ${activo ? '<span class="pack-sello">Aplicado</span>' : ""}
+      <span class="pack-nombre">${esc(k.nombre)}</span>
+      <span class="pack-detalle">${k.cantidad} ${LINEAS[linea]} · ${k.precio ? dinero(k.precio / k.cantidad) + " c/u" : textoDesc(k)}</span>
+      <span class="pack-precio"><span class="desde">${k.precio ? "precio fijo" : "desde"}</span>${min * k.cantidad > nuevo ? `<span class="tachado">${dinero(min * k.cantidad)}</span>` : ""}<span class="nuevo">${dinero(nuevo)}</span></span>
+      ${sinStock ? '<span class="mono muted">Sin piezas suficientes por ahora</span>' : ""}
+    </button>`;
+  }).join("");
+  const lineas = Object.keys(LINEAS).map(linea => {
+    const n = aromasEnCarrito(linea); if (!n || !packsDe(linea).length) return "";
+    const sig = packsDe(linea).find(k => n < k.cantidad), act = packActivo(linea);
+    return sig
+      ? `<span>Llevas <b>${n} ${LINEAS[linea]}</b>. Agrega <b>${sig.cantidad - n} más</b> para el ${esc(sig.nombre)} (${textoDesc(sig)}).</span><div class="barra"><i style="width:${Math.min(100, n / sig.cantidad * 100)}%"></i></div>`
+      : `<span>Llevas <b>${n} ${LINEAS[linea]}</b>. Tienes el mejor precio: <b>${esc(act.nombre)}</b>.</span><div class="barra"><i style="width:100%"></i></div>`;
+  }).filter(Boolean);
+  const prog = $("#progresoAromas");
+  prog.hidden = !lineas.length;
+  prog.innerHTML = lineas.join("");
+}
+
+let filtroGenero = "todos";
+function renderChips() {
+  const aromas = PRODUCTOS.filter(p => p.categoria === "aromas");
+  const gens = Object.keys(GENEROS).filter(g => aromas.some(p => p.genero === g));
+  const hayBolsillo = aromas.some(p => p.linea === "bolsillo") && aromas.some(p => p.linea === "clasico");
+  $("#chipsGenero").hidden = gens.length < 2 && !hayBolsillo;
+  $("#chipsGenero").innerHTML = [["todos", "Todos"], ...gens.map(g => [g, GENEROS[g]]), ...(hayBolsillo ? [["bolsillo", "De bolsillo"]] : [])].map(([k, n]) =>
+    `<button class="chip" type="button" data-genero="${k}" aria-pressed="${filtroGenero === k}">${n}</button>`).join("");
 }
 
 const ordenar = lista => [...lista].sort((a, b) => (a.stock <= 0) - (b.stock <= 0));
@@ -671,9 +814,11 @@ function renderTop() {
   $("#gridTop").innerHTML = top.slice(0, 4).map(tarjeta).join("");
 }
 function renderAromas() {
-  const a = ordenar(PRODUCTOS.filter(p => p.categoria === "aromas"));
-  $("#aromas").hidden = !a.length;
+  const todos = PRODUCTOS.filter(p => p.categoria === "aromas");
+  $("#aromas").hidden = !todos.length;
+  const a = ordenar(todos.filter(p => filtroGenero === "todos" || (filtroGenero === "bolsillo" ? p.linea === "bolsillo" : p.genero === filtroGenero || p.genero === "unisex")));
   $("#scrollAromas").innerHTML = a.map(tarjeta).join("");
+  renderChips(); renderPacks();
 }
 function renderTabs() {
   const cuenta = k => k === "todo" ? PRODUCTOS.length : PRODUCTOS.filter(p => p.categoria === k).length;
@@ -692,32 +837,47 @@ try { carrito = JSON.parse(localStorage.getItem("insanity-carrito") || "[]"); } 
 const guardar = () => { try { localStorage.setItem("insanity-carrito", JSON.stringify(carrito)); } catch (e) {} };
 const buscar = c => PRODUCTOS.find(p => p.codigo === c);
 const enCarrito = codigo => carrito.filter(i => i.codigo === codigo).reduce((s, i) => s + i.cant, 0);
+const enCarritoTalla = (codigo, talla) => carrito.filter(i => i.codigo === codigo && i.talla === talla).reduce((s, i) => s + i.cant, 0);
+/* Piezas que aún se pueden agregar (por talla si la hoja trae stock por talla) */
+function disponible(p, talla) {
+  if (p.stockTalla && talla) return (p.stockTalla[talla] || 0) - enCarritoTalla(p.codigo, talla);
+  return p.stock - enCarrito(p.codigo);
+}
 
 function limpiarCarrito() {
   carrito = carrito.filter(i => buscar(i.codigo) && buscar(i.codigo).stock > 0);
-  carrito.forEach(i => { const p = buscar(i.codigo); if (enCarrito(i.codigo) > p.stock) i.cant = Math.max(1, i.cant - (enCarrito(i.codigo) - p.stock)); });
+  carrito.forEach(i => { const p = buscar(i.codigo); const sobra = -disponible(p, i.talla); if (sobra > 0) i.cant -= sobra; });
+  carrito = carrito.filter(i => i.cant > 0);
   guardar();
 }
 
 function actualizarContador() {
   const n = carrito.reduce((s, i) => s + i.cant, 0);
   $$("[data-count]").forEach(b => { b.textContent = n; b.classList.toggle("cero", n === 0); });
+  refrescarPrecios(); if (PRODUCTOS.length) renderPacks();
 }
 
-function agregar(codigo, talla) {
+function agregar(codigo, talla, cant = 1) {
   const p = buscar(codigo);
-  if (!p || enCarrito(codigo) >= p.stock) return false;
+  cant = Math.min(cant, p ? disponible(p, talla) : 0);
+  if (cant <= 0) return false;
   const ex = carrito.find(i => i.codigo === codigo && i.talla === talla);
-  ex ? ex.cant++ : carrito.push({ codigo, talla, cant: 1 });
+  ex ? ex.cant += cant : carrito.push({ codigo, talla, cant });
   guardar(); actualizarContador();
   const fab = $("#cartFab"); fab.classList.remove("pulse"); void fab.offsetWidth; fab.classList.add("pulse");
   return true;
 }
 
 function totales() {
-  const total = carrito.reduce((s, i) => s + buscar(i.codigo).precio * i.cant, 0);
+  const subtotal = carrito.reduce((s, i) => s + buscar(i.codigo).precio * i.cant, 0);
+  const total = carrito.reduce((s, i) => s + precioUnit(buscar(i.codigo)) * i.cant, 0);
   const anticipo = Math.ceil(total * CONFIG.anticipo);
-  return { total, anticipo, resto: total - anticipo };
+  const packs = Object.keys(LINEAS).map(linea => {
+    const k = packActivo(linea); if (!k) return null;
+    const ahorro = carrito.filter(i => esAroma(buscar(i.codigo), linea)).reduce((s, i) => { const p = buscar(i.codigo); return s + (p.precio - precioUnit(p)) * i.cant; }, 0);
+    return { k, n: aromasEnCarrito(linea), ahorro };
+  }).filter(x => x && x.ahorro > 0);
+  return { subtotal, ahorro: subtotal - total, packs, total, anticipo, resto: total - anticipo };
 }
 
 let datosEntrega = { nombre: "", zona: "" };
@@ -727,7 +887,8 @@ function mensajeWhatsApp() {
   const t = totales();
   const lineas = carrito.map(i => {
     const p = buscar(i.codigo);
-    return `• ${i.cant}x ${p.nombre} (${p.codigo})${i.talla ? " · Talla " + i.talla : ""} — ${dinero(p.precio * i.cant)}`;
+    const u = precioUnit(p);
+    return `• ${i.cant}x ${p.nombre} (${p.codigo})${i.talla ? " · Talla " + i.talla : ""}${p.genero ? " · " + GENEROS[p.genero] : ""} — ${i.cant > 1 ? dinero(u) + " c/u = " : ""}${dinero(u * i.cant)}`;
   });
   return [
     "🔥 *PEDIDO INSANITY*",
@@ -736,6 +897,7 @@ function mensajeWhatsApp() {
     "",
     ...lineas,
     "",
+    ...t.packs.map(x => `${x.k.nombre} (${x.n} piezas, ${textoDesc(x.k)}): ahorras ${dinero(x.ahorro)}`),
     `*TOTAL: ${dinero(t.total)} MXN*`,
     `Anticipo 50%: ${dinero(t.anticipo)} por transferencia`,
     `Restante: ${dinero(t.resto)} al recibir (efectivo o transferencia)`,
@@ -756,19 +918,22 @@ function renderCarrito() {
   const zonas = CONFIG.zonas.map(z => `<option${datosEntrega.zona === z ? " selected" : ""}>${esc(z)}</option>`).join("");
   body.innerHTML = carrito.map((i, idx) => {
     const p = buscar(i.codigo);
-    const lleno = enCarrito(p.codigo) >= p.stock;
+    const lleno = disponible(p, i.talla) <= 0;
     return `<div class="item">
       <div class="item-img">${imagenHTML(p, false)}</div>
       <div>
         <div class="item-name">${esc(p.nombre)}</div>
-        <div class="mono muted">${esc(p.codigo)}${i.talla ? " · Talla " + esc(i.talla) : ""}</div>
+        <div class="mono muted">${esc(p.codigo)}${i.talla ? " · Talla " + esc(i.talla) : ""}${p.genero ? " · " + GENEROS[p.genero] : ""}</div>
         <div class="qty"><button type="button" data-menos="${idx}" aria-label="Quitar uno">−</button><span>${i.cant}</span><button type="button" data-mas="${idx}" aria-label="Agregar uno" ${lleno ? "disabled" : ""}>+</button></div>
         <div><button class="quitar" type="button" data-quitar="${idx}">Quitar</button></div>
       </div>
-      <span class="precio">${dinero(p.precio * i.cant)}</span>
+      <span class="precio">${precioHTML(p, i.cant)}</span>
     </div>`;
   }).join("") + `
+    ${aromasEnCarrito() ? `<div class="progreso">${$("#progresoAromas").innerHTML}</div>` : ""}
     <div class="totales">
+      ${t.packs.length ? `<div class="muted"><span>Subtotal</span><span>${dinero(t.subtotal)}</span></div>` : ""}
+      ${t.packs.map(x => `<div class="descuento-linea"><span>${esc(x.k.nombre)} · ${textoDesc(x.k)}</span><span>−${dinero(x.ahorro)}</span></div>`).join("")}
       <div><span>Total</span><span class="total">${dinero(t.total)}</span></div>
       <div><span>Anticipo para apartar (50%)</span><span class="anticipo">${dinero(t.anticipo)}</span></div>
       <div class="muted"><span>Pagas al recibir</span><span>${dinero(t.resto)}</span></div>
@@ -810,30 +975,38 @@ function cerrar(rapido) {
   setTimeout(() => { if (abierto !== p) p.hidden = true; }, rapido ? 0 : 300);
 }
 
-let fichaActual = null, tallaElegida = null;
+let fichaActual = null, tallaElegida = null, cantFicha = 1;
 function abrirFicha(codigo) {
   const p = buscar(codigo); if (!p) return;
-  fichaActual = p; tallaElegida = p.tallas.length === 1 ? p.tallas[0] : null;
+  const conStock = p.tallas.filter(t => !p.stockTalla || p.stockTalla[t] > 0);
+  fichaActual = p; cantFicha = 1; tallaElegida = conStock.length === 1 ? conStock[0] : null;
   const est = estadoStock(p);
   $("#fichaCodigo").textContent = p.codigo;
   $("#fichaBody").innerHTML = `
     <div class="ficha-img">${imagenHTML(p)}</div>
     <div>
-      <span class="mono muted">${esc(CATEGORIAS[p.categoria].nombre)}</span>
+      <span class="mono muted">${esc(etiquetaCat(p))}</span>
       <h4 id="fichaTitulo">${esc(p.nombre)}</h4>
-      <span class="precio">${dinero(p.precio)}</span>
+      <span class="precio" data-precio="${esc(p.codigo)}">${precioHTML(p)}</span>
       <div class="stock-line"><span class="dot${p.stock <= 0 ? " rojo" : ""}"></span>${p.stock <= 0 ? "Agotado por ahora" : est ? est.txt : "Disponible"}</div>
     </div>
     ${p.tallas.length ? `<div><span class="mono muted">Talla</span><div class="tallas">${p.tallas.map(t =>
-      `<button class="talla" type="button" data-talla="${esc(t)}" aria-pressed="${tallaElegida === t}">${esc(t)}</button>`).join("")}</div><div class="aviso" id="avisoTalla"></div></div>` : ""}`;
+      `<button class="talla" type="button" data-talla="${esc(t)}" aria-pressed="${tallaElegida === t}" ${p.stockTalla && !p.stockTalla[t] ? "disabled" : ""}>${esc(t)}</button>`).join("")}</div><div class="aviso" id="avisoTalla"></div></div>` : ""}
+    ${p.stock > 1 ? `<div><span class="mono muted">Cantidad</span><div class="cant-ficha"><div class="qty"><button type="button" data-cant="-1" aria-label="Menos">−</button><span id="cantFicha">1</span><button type="button" data-cant="1" aria-label="Más">+</button></div><span class="mono muted" id="dispFicha"></span></div></div>` : ""}`;
   actualizarBotonAgregar();
   abrir($("#panelFicha"));
 }
 function actualizarBotonAgregar() {
   const b = $("#btnAgregar"), p = fichaActual;
+  const disp = disponible(p, tallaElegida);
+  cantFicha = Math.max(1, Math.min(cantFicha, Math.max(1, disp)));
+  if ($("#cantFicha")) {
+    $("#cantFicha").textContent = cantFicha;
+    $("#dispFicha").textContent = p.stockTalla && !tallaElegida ? "Elige talla" : `${Math.max(0, disp)} disponibles`;
+  }
   if (p.stock <= 0) { b.textContent = "Agotado"; b.disabled = true; return; }
-  if (enCarrito(p.codigo) >= p.stock) { b.textContent = "Ya tienes todas las piezas"; b.disabled = true; return; }
-  b.disabled = false; b.textContent = "Agregar al carrito · " + dinero(p.precio);
+  if (disp <= 0 && (!p.stockTalla || tallaElegida)) { b.textContent = "Ya tienes todas las piezas"; b.disabled = true; return; }
+  b.disabled = false; b.textContent = `Agregar ${cantFicha > 1 ? cantFicha + " " : ""}al carrito · ` + dinero(p.precio * cantFicha);
 }
 
 /* ---------- toast ---------- */
@@ -849,18 +1022,31 @@ document.addEventListener("click", e => {
   if (e.target.closest("#cartTop, #cartFab")) { renderCarrito(); return abrir($("#panelCarrito")); }
   if (e.target.closest("[data-cerrar]") || e.target.id === "velo") return cerrar();
   const talla = e.target.closest("[data-talla]");
-  if (talla) { tallaElegida = talla.dataset.talla; $$("[data-talla]").forEach(b => b.setAttribute("aria-pressed", b === talla)); $("#avisoTalla").textContent = ""; return; }
+  if (talla) { tallaElegida = talla.dataset.talla; $$("[data-talla]").forEach(b => b.setAttribute("aria-pressed", b === talla)); $("#avisoTalla").textContent = ""; actualizarBotonAgregar(); return; }
+  const c = e.target.closest("[data-cant]");
+  if (c) { cantFicha += +c.dataset.cant; actualizarBotonAgregar(); return; }
+  const gen = e.target.closest("[data-genero]");
+  if (gen) { filtroGenero = gen.dataset.genero; renderAromas(); return; }
+  const pack = e.target.closest("[data-pack]");
+  if (pack) {
+    const k = CONFIG.paquetes[+pack.dataset.pack], linea = k.linea || "clasico";
+    const faltan = k.cantidad - aromasEnCarrito(linea);
+    filtroGenero = linea === "bolsillo" ? "bolsillo" : "todos"; renderAromas();
+    toast(faltan > 0 ? `Elige ${faltan} ${LINEAS[linea]} más` : `${k.nombre} ya aplicado`);
+    $("#scrollAromas").scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
   if (e.target.closest("#btnAgregar")) {
     const p = fichaActual;
     if (p.tallas.length && !tallaElegida) { $("#avisoTalla").textContent = "Elige una talla para continuar."; return; }
-    if (agregar(p.codigo, tallaElegida)) { toast("Agregado al carrito"); cerrar(); }
+    if (agregar(p.codigo, tallaElegida, cantFicha)) { toast(cantFicha > 1 ? `${cantFicha} agregados al carrito` : "Agregado al carrito"); cerrar(); }
     return;
   }
   const mas = e.target.closest("[data-mas]"), menos = e.target.closest("[data-menos]"), quitar = e.target.closest("[data-quitar]");
   if (mas || menos || quitar) {
     const idx = +(mas || menos || quitar).dataset[mas ? "mas" : menos ? "menos" : "quitar"];
     const i = carrito[idx];
-    if (mas && enCarrito(i.codigo) < buscar(i.codigo).stock) i.cant++;
+    if (mas && disponible(buscar(i.codigo), i.talla) > 0) i.cant++;
     if (menos) i.cant--;
     if (quitar || i.cant <= 0) carrito.splice(idx, 1);
     guardar(); actualizarContador(); renderCarrito(); return;
