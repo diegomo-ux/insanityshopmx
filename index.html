@@ -624,18 +624,23 @@ function normalizar(p, desdeSheet) {
   };
 }
 
+const DIAG = { version: "v3", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
+
 async function cargarProductos() {
   if (CONFIG.sheetCSV) {
     try {
       const r = await fetch(CONFIG.sheetCSV, { cache: "no-store" });
-      if (!r.ok) throw new Error(r.status);
+      if (!r.ok) throw new Error("respuesta " + r.status);
       const filas = parseCSV(await r.text());
       const cab = filas.shift().map(sinAcentos);
+      DIAG.columnas = cab.join(", ");
+      DIAG.filas = filas.length;
       const lista = filas.map(f => Object.fromEntries(cab.map((k, i) => [k, f[i] ?? ""])))
         .map(o => normalizar(o, true))
         .filter(p => p.codigo && p.activo);
+      DIAG.estado = lista.length ? "OK, leída" : "leída, pero sin productos válidos (¿fila vacía o activo = no?)";
       if (lista.length) return lista;
-    } catch (e) { console.warn("No se pudo leer la Sheet, uso ejemplos.", e); }
+    } catch (e) { DIAG.estado = "ERROR al leer: " + e.message; console.warn("No se pudo leer la Sheet, uso ejemplos.", e); }
   }
   $("#demoBar").hidden = false;
   return EJEMPLO.map(p => normalizar(p, false));
@@ -873,6 +878,24 @@ document.addEventListener("input", e => {
 document.addEventListener("change", e => { if (e.target.id === "inZona") { datosEntrega.zona = e.target.value; refrescarLinkWhats(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
 
+/* ---------- diagnóstico: abre tu sitio con #diagnostico al final ---------- */
+function probarFoto(url) {
+  return new Promise(ok => { const i = new Image(); i.onload = () => ok(true); i.onerror = () => ok(false); i.src = url; });
+}
+async function diagnostico() {
+  const caja = document.createElement("div");
+  caja.style.cssText = "position:fixed;inset:12px;z-index:99;overflow:auto;background:#000;color:#ECE7DD;border:1px solid #ECE7DD;padding:16px;font:12px/1.6 monospace;white-space:pre-wrap";
+  document.body.appendChild(caja);
+  let t = `DIAGNÓSTICO INSANITY · index ${DIAG.version}\n\nSheet: ${DIAG.sheet}\nEstado: ${DIAG.estado || "no se intentó"}\nColumnas: ${DIAG.columnas || "-"}\nFilas leídas: ${DIAG.filas}\n\n`;
+  caja.textContent = t + "Probando fotos…";
+  for (const p of PRODUCTOS) {
+    let encontrada = "";
+    for (const u of p.fotos) { if (await probarFoto(u)) { encontrada = u; break; } }
+    t += `${p.codigo} · ${p.nombre}\n   foto: ${encontrada ? "✔ " + encontrada : "✘ no encontrada. Buscó: " + (p.fotos[0] || "nada")}\n`;
+  }
+  caja.textContent = t + "\nCierra recargando la página sin #diagnostico.";
+}
+
 /* ---------- arranque ---------- */
 (async function iniciar() {
   $("#anio").textContent = new Date().getFullYear();
@@ -884,6 +907,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); })
   PRODUCTOS = await cargarProductos();
   limpiarCarrito(); actualizarContador();
   renderTop(); renderAromas(); renderTabs(); renderCatalogo();
+  if (location.hash === "#diagnostico") diagnostico();
 })();
 </script>
 </body>
