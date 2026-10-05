@@ -6,6 +6,15 @@
 <meta name="theme-color" content="#111111">
 <meta name="description" content="INSANITY · Streetwear, equipaje urbano y aromas. Aparta por WhatsApp con 50% y recibe en Cuernavaca y Jiutepec.">
 <title>INSANITY Tienda</title>
+<!-- Vista previa al compartir el link (WhatsApp, Facebook, etc.). Imagen: img/preview.jpg, 1200 × 630 px -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://diegomo-ux.github.io/insanityshopmx/">
+<meta property="og:title" content="INSANITY · Tienda">
+<meta property="og:description" content="Streetwear, accesorios y aromas. Aparta con 50% y recibe en Cuernavaca y Jiutepec.">
+<meta property="og:image" content="https://diegomo-ux.github.io/insanityshopmx/img/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -72,6 +81,8 @@ a { color: inherit; }
 .header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .logo img { height: 34px; width: auto; }
+.logo .logo-img { height: 22px; width: auto; display: block; }
+@media (min-width: 768px) { .logo .logo-img { height: 28px; } }
 .logo-word { font-family: var(--f-display); font-size: 15px; line-height: .92; letter-spacing: .06em; }
 .nav { display: none; gap: 28px; }
 .nav a { text-decoration: none; font-family: var(--f-codigo); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--humo); }
@@ -369,7 +380,7 @@ a { color: inherit; }
 <header class="header">
   <div class="wrap">
     <a class="logo" href="#inicio" aria-label="INSANITY, inicio">
-      <span class="logo-word">INSA<br>NITY</span>
+      <img class="logo-img" src="img/logo.svg" alt="INSANITY" width="725" height="120">
     </a>
     <nav class="nav" aria-label="Secciones">
       <a href="#top">Lo más pesado</a>
@@ -455,11 +466,8 @@ a { color: inherit; }
         <div><span class="mono muted">Así se ve en la calle</span><h2>La Familia</h2></div>
         <span class="mono muted">Desliza →</span>
       </div>
-      <div class="scroller">
-        <figure><img src="img/familia/familia-1.jpg" alt="Outfit con playera negra y cargo olivo" loading="lazy"></figure>
-        <figure><img src="img/familia/familia-2.jpg" alt="Conjunto beige de playera y short en una azotea" loading="lazy"></figure>
-        <figure><img src="img/familia/familia-3.jpg" alt="Playera negra con estampado frente a un mural" loading="lazy"></figure>
-      </div>
+      <!-- Se llena solo con img/familia/familia-1.jpg … familia-15.jpg (las que existan, en orden) -->
+      <div class="scroller" id="galeriaFamilia"></div>
     </div>
   </section>
 
@@ -560,6 +568,7 @@ const CONFIG = {
   entrega: "1 a 4 días",
   zonas: ["Cuernavaca", "Jiutepec"],
   instagram: "https://instagram.com/",
+  fotosFamilia: 15,              // busca familia-1 … familia-15; si falta un número, se lo salta
   // Apartados: pega aquí el link de tu Apps Script (termina en /exec). Vacío = solo WhatsApp, sin restar stock.
   apartadosURL: "",
   horasApartado: 24,             // solo para mostrarlo al cliente; el límite real se pone en el Apps Script
@@ -1131,6 +1140,21 @@ document.addEventListener("input", e => {
 document.addEventListener("change", e => { if (e.target.id === "inZona") { datosEntrega.zona = e.target.value; refrescarLinkWhats(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
 
+/* ---------- La Familia: carga las fotos que existan, en orden ---------- */
+async function cargarFamilia() {
+  const cont = $("#galeriaFamilia");
+  const intentos = Array.from({ length: CONFIG.fotosFamilia }, (_, i) => i + 1).map(async n => {
+    for (const ext of ["jpg", "jpeg", "png", "webp", "JPG"]) {
+      const url = `img/familia/familia-${n}.${ext}`;
+      if (await probarFoto(url)) return url;
+    }
+    return null;
+  });
+  const fotos = (await Promise.all(intentos)).filter(Boolean);
+  $("#familia").hidden = !fotos.length;
+  cont.innerHTML = fotos.map(u => `<figure><img src="${u}" alt="La Familia INSANITY" loading="lazy"></figure>`).join("");
+}
+
 /* ---------- diagnóstico: abre tu sitio con #diagnostico al final ---------- */
 function probarFoto(url) {
   return new Promise(ok => { const i = new Image(); i.onload = () => ok(true); i.onerror = () => ok(false); i.src = url; });
@@ -1160,6 +1184,7 @@ async function diagnostico() {
   PRODUCTOS = await cargarProductos();
   limpiarCarrito(); actualizarContador();
   renderTop(); renderAromas(); renderTabs(); renderCatalogo();
+  cargarFamilia();
   if (location.hash === "#diagnostico") diagnostico();
 })();
 </script>
