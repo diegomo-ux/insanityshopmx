@@ -276,6 +276,7 @@ a { color: inherit; }
 .ficha h4 { font-family: var(--f-display); font-weight: 400; font-size: 30px; line-height: 1; text-transform: uppercase; margin: 6px 0 8px; }
 .ficha .precio { font-size: 20px; }
 .stock-line { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: #cfcfcf; }
+.descripcion { margin: 14px 0 0; font-size: 14px; line-height: 1.55; color: #cfcfcf; white-space: pre-line; }
 .dot { width: 7px; height: 7px; background: var(--olivo); flex: none; }
 .dot.rojo { background: var(--alerta); box-shadow: none; }
 .tallas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -559,6 +560,9 @@ const CONFIG = {
   entrega: "1 a 4 días",
   zonas: ["Cuernavaca", "Jiutepec"],
   instagram: "https://instagram.com/",
+  // Apartados: pega aquí el link de tu Apps Script (termina en /exec). Vacío = solo WhatsApp, sin restar stock.
+  apartadosURL: "",
+  horasApartado: 24,             // solo para mostrarlo al cliente; el límite real se pone en el Apps Script
   // Paquetes de mayoreo de aromas. Cualquier combinación dentro de la misma línea.
   // linea "clasico" = perfumes de 30 ml · linea "bolsillo" = tipo lápiz / de bolsillo
   // descuento = pesos menos por pieza · precio = precio fijo del paquete completo
@@ -572,13 +576,14 @@ const CONFIG = {
 
 /* Productos de ejemplo: se usan solo si no hay Sheet conectada */
 const EJEMPLO = [
-  { codigo:"INS-B002", nombre:"Playera Oversize Gótica", categoria:"streetwear", precio:450, tallas:"S:1, M:2, L:0", stock:"", top:true },
-  { codigo:"INS-B007", nombre:"Conjunto Beige Playera + Short", categoria:"streetwear", precio:780, tallas:"M,L", stock:1, top:true },
-  { codigo:"INS-P001", nombre:"Aroma Glitch 30 ml", categoria:"Aromas Caballero", precio:70, tallas:"", stock:25, top:true },
+  { codigo:"INS-B002", nombre:"Playera Oversize Gótica", categoria:"Playeras Hombre", precio:450, tallas:"S:1, M:2, L:0", stock:"", top:true, descripcion:"Algodón pesado 240 g. Corte oversize: si dudas, pide tu talla normal." },
+  { codigo:"INS-B007", nombre:"Conjunto Beige Playera + Short", categoria:"Streetwear", precio:780, tallas:"M,L", stock:1, top:true },
+  { codigo:"INS-P001", nombre:"Aroma Glitch 30 ml", categoria:"Aromas Caballero", precio:70, tallas:"", stock:25, top:true, descripcion:"Notas amaderadas y cítricas. Dura de 6 a 8 horas." },
   { codigo:"INS-C003", nombre:"Bandolera Táctica Negra", categoria:"Bandoleras", precio:390, tallas:"", stock:3, top:true },
-  { codigo:"INS-B011", nombre:"Cargo Pants Olivo", categoria:"streetwear", precio:620, tallas:"28,30,32", stock:2 },
-  { codigo:"INS-B014", nombre:"Croptop Negro Básico", categoria:"streetwear", precio:290, tallas:"CH,M", stock:4 },
-  { codigo:"INS-B019", nombre:"Playera Estampado Ángel", categoria:"streetwear", precio:480, tallas:"M,L,XL", stock:0 },
+  { codigo:"INS-B011", nombre:"Cargo Pants Olivo", categoria:"Pantalones Hombre", precio:620, tallas:"28,30,32", stock:2, descripcion:"Medidas talla 30: cintura 78 cm, largo 102 cm." },
+  { codigo:"INS-B015", nombre:"Wide Leg Denim", categoria:"Pantalones Mujer", precio:590, tallas:"26:1, 28:1", stock:"" },
+  { codigo:"INS-B014", nombre:"Crop Top Negro Básico", categoria:"Crop Top", precio:290, tallas:"CH,M", stock:4 },
+  { codigo:"INS-B019", nombre:"Playera Estampado Ángel", categoria:"Playeras Hombre", precio:480, tallas:"M,L,XL", stock:0 },
   { codigo:"INS-C006", nombre:"Crossbody Mini Monograma", categoria:"Bandoleras", precio:450, tallas:"", stock:1 },
   { codigo:"INS-C009", nombre:"Bolsa Tote Urbana", categoria:"Bolsas", precio:520, tallas:"", stock:2 },
   { codigo:"INS-P002", nombre:"Aroma Noche 30 ml", categoria:"Aromas Dama", precio:70, tallas:"", stock:20 },
@@ -588,8 +593,13 @@ const EJEMPLO = [
   { codigo:"INS-L002", nombre:"Bolsillo Rosa Negra", categoria:"Bolsillo Dama", precio:35, tallas:"", stock:30 }
 ];
 
+/* El orden aquí es el orden de las pestañas del catálogo */
 const CATEGORIAS = {
-  streetwear: { nombre: "Streetwear", icono: "playera" },
+  playeras:    { nombre: "Playeras Hombre", icono: "playera" },
+  croptops:    { nombre: "Crop Tops", icono: "crop" },
+  pantalonesH: { nombre: "Pantalones Hombre", icono: "pantalon" },
+  pantalonesM: { nombre: "Pantalones Mujer", icono: "pantalon" },
+  streetwear:  { nombre: "Streetwear", icono: "playera" },
   bandoleras: { nombre: "Bandoleras", icono: "bandolera" },
   bolsas:     { nombre: "Bolsas", icono: "bolsa" },
   aromas:     { nombre: "Aromas", icono: "perfume" }
@@ -606,6 +616,8 @@ const ICONOS = {
   playera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 8l-14 8 5 11 6-3v32h26V24l6 3 5-11-14-8c-1 4-5 7-10 7s-9-3-10-7z"/></svg>',
   bolsa:   '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 26h44v28H10z"/><path d="M14 26L26 6M50 26L38 6"/><path d="M10 34h44"/></svg>',
   bandolera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 30h36v22H14z"/><path d="M14 38h36"/><path d="M16 30L44 6M48 30L20 6" stroke-dasharray="2 3"/></svg>',
+  crop:    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 10l-12 7 4 9 5-2v14h22V24l5 2 4-9-12-7c-1 3-4 5-8 5s-7-2-8-5z"/><path d="M21 38h22"/></svg>',
+  pantalon:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6h28l4 52H36l-4-34-4 34H14z"/><path d="M18 13h28"/></svg>',
   perfume: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M26 6h12v8H26z"/><path d="M29 14v6M35 14v6"/><path d="M18 20h28v38H18z"/><path d="M24 34h16v12H24z"/></svg>'
 };
 
@@ -636,6 +648,10 @@ function categoriaDe(txt) {
   if (t.includes("aroma") || t.includes("perfum") || t.includes("bolsillo") || t.includes("lapiz")) return "aromas";
   if (t.includes("bandolera") || t.includes("crossbody") || t.includes("equipaje")) return "bandoleras";
   if (t.includes("bolsa") || t.includes("tote") || t.includes("mochila")) return "bolsas";
+  if (t.includes("crop")) return "croptops";
+  if (t.includes("pantalon") || t.includes("jean") || t.includes("cargo") || t.includes("jogger"))
+    return t.includes("mujer") || t.includes("dama") ? "pantalonesM" : "pantalonesH";
+  if (t.includes("playera")) return "playeras";
   return "streetwear";
 }
 
@@ -697,6 +713,7 @@ function normalizar(p, desdeSheet) {
   return {
     codigo,
     nombre: String(p.nombre || codigo).trim(),
+    descripcion: String(p.descripcion || "").trim(),
     categoria: categoriaDe(p.categoria),
     precio: Number(String(p.precio).replace(/[^0-9.]/g, "")) || 0,
     ...leerTallas(p.tallas, p.stock),
@@ -708,7 +725,7 @@ function normalizar(p, desdeSheet) {
   };
 }
 
-const DIAG = { version: "v7", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
+const DIAG = { version: "v8", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
 
 async function cargarProductos() {
   if (CONFIG.sheetCSV) {
@@ -743,7 +760,7 @@ function tarjeta(p) {
   </button>`;
 }
 
-const etiquetaCat = p => (p.categoria === "aromas" && p.linea === "bolsillo" ? "Bolsillo" : CATEGORIAS[p.categoria].nombre) + (p.genero ? " · " + GENEROS[p.genero] : "");
+const etiquetaCat = p => (p.categoria === "aromas" && p.linea === "bolsillo" ? "Bolsillo" : CATEGORIAS[p.categoria].nombre) + (p.categoria === "aromas" && p.genero ? " · " + GENEROS[p.genero] : "");
 
 /* ---------- mayoreo ---------- */
 const LINEAS = { clasico: "aromas", bolsillo: "aromas de bolsillo" };
@@ -886,15 +903,15 @@ function totales() {
 let datosEntrega = { nombre: "", zona: "" };
 try { datosEntrega = Object.assign(datosEntrega, JSON.parse(localStorage.getItem("insanity-datos") || "{}")); } catch (e) {}
 
-function mensajeWhatsApp() {
+function mensajeWhatsApp(folio) {
   const t = totales();
   const lineas = carrito.map(i => {
     const p = buscar(i.codigo);
     const u = precioUnit(p);
-    return `• ${i.cant}x ${p.nombre} (${p.codigo})${i.talla ? " · Talla " + i.talla : ""}${p.genero ? " · " + GENEROS[p.genero] : ""} — ${i.cant > 1 ? dinero(u) + " c/u = " : ""}${dinero(u * i.cant)}`;
+    return `• ${i.cant}x ${p.nombre} (${p.codigo})${i.talla ? " · Talla " + i.talla : ""}${p.categoria === "aromas" && p.genero ? " · " + GENEROS[p.genero] : ""} — ${i.cant > 1 ? dinero(u) + " c/u = " : ""}${dinero(u * i.cant)}`;
   });
   return [
-    "🔥 *PEDIDO INSANITY*",
+    "🔥 *PEDIDO INSANITY*" + (folio ? ` · Folio ${folio}` : ""),
     datosEntrega.nombre ? `Nombre: ${datosEntrega.nombre}` : "",
     datosEntrega.zona ? `Zona de entrega: ${datosEntrega.zona}` : "",
     "",
@@ -906,7 +923,7 @@ function mensajeWhatsApp() {
     `Restante: ${dinero(t.resto)} al recibir (efectivo o transferencia)`,
     `Entrega: ${CONFIG.entrega}`,
     "",
-    "Quiero apartar mi pedido. ¿Me pasas los datos para el anticipo?"
+    folio ? `Mis piezas quedan apartadas ${CONFIG.horasApartado} horas. ¿Me pasas los datos para el anticipo?` : "Quiero apartar mi pedido. ¿Me pasas los datos para el anticipo?"
   ].filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n");
 }
 
@@ -926,7 +943,7 @@ function renderCarrito() {
       <div class="item-img">${imagenHTML(p, false)}</div>
       <div>
         <div class="item-name">${esc(p.nombre)}</div>
-        <div class="mono muted">${esc(p.codigo)}${i.talla ? " · Talla " + esc(i.talla) : ""}${p.genero ? " · " + GENEROS[p.genero] : ""}</div>
+        <div class="mono muted">${esc(p.codigo)}${i.talla ? " · Talla " + esc(i.talla) : ""}${p.categoria === "aromas" && p.genero ? " · " + GENEROS[p.genero] : ""}</div>
         <div class="qty"><button type="button" data-menos="${idx}" aria-label="Quitar uno">−</button><span>${i.cant}</span><button type="button" data-mas="${idx}" aria-label="Agregar uno" ${lleno ? "disabled" : ""}>+</button></div>
         <div><button class="quitar" type="button" data-quitar="${idx}">Quitar</button></div>
       </div>
@@ -945,14 +962,56 @@ function renderCarrito() {
       <div class="campo"><label for="inNombre">Tu nombre</label><input id="inNombre" autocomplete="name" placeholder="Cómo te llamas" value="${esc(datosEntrega.nombre)}"></div>
       <div class="campo"><label for="inZona">Zona de entrega</label><select id="inZona"><option value="">Elige tu zona</option>${zonas}</select></div>
       <div class="mini-reglas">
-        <span>Se aparta con el <b>50%</b> por transferencia.</span>
+        <span>Se aparta con el <b>50%</b> por transferencia${CONFIG.apartadosURL ? `; tus piezas se guardan <b>${CONFIG.horasApartado} horas</b>` : ""}.</span>
         <span>Entregamos en <b>${esc(CONFIG.entrega)}</b> en ${esc(CONFIG.zonas.join(" y "))}.</span>
         <span>El resto lo pagas <b>el día de la entrega</b>.</span>
       </div>
     </div>`;
   const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp())}`;
-  foot.innerHTML = `<a class="btn btn-neon btn-full" id="btnWhats" href="${url}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+  foot.innerHTML = (CONFIG.apartadosURL
+    ? `<button class="btn btn-neon btn-full" id="btnApartar" type="button">Apartar y enviar por WhatsApp</button><div class="aviso" id="avisoApartar"></div>`
+    : `<a class="btn btn-neon btn-full" id="btnWhats" href="${url}" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>`) + `
     <div class="copia">¿No se abrió WhatsApp? <button type="button" id="btnCopiar">Copia el pedido</button> y mándalo al ${esc(telVisible())}</div>`;
+}
+
+/* ---------- apartados (Apps Script) ---------- */
+async function apartar() {
+  const b = $("#btnApartar"), aviso = $("#avisoApartar");
+  if (!datosEntrega.nombre || !datosEntrega.zona) { aviso.textContent = "Escribe tu nombre y elige tu zona para apartar."; return; }
+  b.disabled = true; b.textContent = "Apartando…"; aviso.textContent = "";
+  const t = totales();
+  const pedido = {
+    nombre: datosEntrega.nombre, zona: datosEntrega.zona,
+    items: carrito.map(i => ({ codigo: i.codigo, talla: i.talla || "", cant: i.cant, nombre: buscar(i.codigo).nombre })),
+    total: t.total, anticipo: t.anticipo, resumen: mensajeWhatsApp()
+  };
+  let r;
+  try {
+    const res = await fetch(CONFIG.apartadosURL, { method: "POST", body: JSON.stringify(pedido) });
+    r = await res.json();
+  } catch (e) {
+    // Si el script no responde, no perdemos la venta: se manda por WhatsApp como antes
+    location.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp())}`;
+    return;
+  }
+  if (r.ok) {
+    const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp(r.folio))}`;
+    carrito = []; guardar(); actualizarContador();
+    $("#carritoBody").innerHTML = `<div class="vacio"><strong>Apartado ${esc(r.folio)}</strong>Tus piezas quedan guardadas ${CONFIG.horasApartado} horas. Manda el anticipo por WhatsApp para confirmar.</div>`;
+    $("#carritoFoot").innerHTML = `<a class="btn btn-neon btn-full" href="${url}" target="_blank" rel="noopener">Abrir WhatsApp</a>`;
+    location.href = url;
+    return;
+  }
+  // Alguien ganó la pieza: ajustamos el stock local y el carrito
+  (r.faltantes || []).forEach(x => {
+    const p = buscar(x.codigo); if (!p) return;
+    if (p.stockTalla && x.talla) { p.stockTalla[x.talla] = x.disponible; p.stock = Object.values(p.stockTalla).reduce((a, n) => a + n, 0); }
+    else p.stock = x.disponible;
+  });
+  limpiarCarrito(); actualizarContador(); renderTop(); renderAromas(); renderTabs(); renderCatalogo(); renderCarrito();
+  const nombres = (r.faltantes || []).map(x => (buscar(x.codigo)?.nombre || x.codigo) + (x.talla ? " (" + x.talla + ")" : "")).join(", ");
+  const msg = r.faltantes?.length ? `Ya no está disponible: ${nombres}. Ajustamos tu carrito.` : (r.error || "No se pudo apartar. Intenta de nuevo.");
+  const av = $("#avisoApartar"); av ? av.textContent = msg : toast(msg);
 }
 
 function refrescarLinkWhats() {
@@ -992,6 +1051,7 @@ function abrirFicha(codigo) {
       <h4 id="fichaTitulo">${esc(p.nombre)}</h4>
       <span class="precio" data-precio="${esc(p.codigo)}">${precioHTML(p)}</span>
       <div class="stock-line"><span class="dot${p.stock <= 0 ? " rojo" : ""}"></span>${p.stock <= 0 ? "Agotado por ahora" : est ? est.txt : "Disponible"}</div>
+      ${p.descripcion ? `<p class="descripcion">${esc(p.descripcion)}</p>` : ""}
     </div>
     ${p.tallas.length ? `<div><span class="mono muted">Talla</span><div class="tallas">${p.tallas.map(t =>
       `<button class="talla" type="button" data-talla="${esc(t)}" aria-pressed="${tallaElegida === t}" ${p.stockTalla && !p.stockTalla[t] ? "disabled" : ""}>${esc(t)}</button>`).join("")}</div><div class="aviso" id="avisoTalla"></div></div>` : ""}
@@ -1054,6 +1114,7 @@ document.addEventListener("click", e => {
     if (quitar || i.cant <= 0) carrito.splice(idx, 1);
     guardar(); actualizarContador(); renderCarrito(); return;
   }
+  if (e.target.closest("#btnApartar")) { apartar(); return; }
   if (e.target.closest("#btnCopiar")) {
     const txt = mensajeWhatsApp();
     navigator.clipboard?.writeText(txt).then(() => toast("Pedido copiado"), () => toast("No se pudo copiar"));
