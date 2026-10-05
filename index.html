@@ -115,6 +115,9 @@ a { color: inherit; }
   font-size: clamp(46px, 14vw, 104px); line-height: .9; letter-spacing: .01em; margin: 10px 0 12px;
   text-wrap: balance;
 }
+.hero h1.titulos { display: grid; font-size: clamp(38px, 10.5vw, 84px); }
+.titulos span { grid-area: 1 / 1; opacity: 0; filter: blur(6px); transform: translateY(8px); transition: opacity .7s ease, filter .7s ease, transform .7s ease; }
+.titulos span.on { opacity: 1; filter: none; transform: none; }
 .hero p { margin: 0 0 22px; max-width: 34ch; color: #d6d6d6; }
 
 /* ---------- Secciones ---------- */
@@ -196,9 +199,10 @@ a { color: inherit; }
 .mayoreo h3 { font-family: var(--f-display); font-weight: 400; font-size: clamp(26px, 7vw, 40px); text-transform: uppercase; margin: 6px 0 6px; line-height: 1; }
 .mayoreo > p { margin: 0 0 20px; color: #cfcfcf; max-width: 48ch; }
 .packs { display: grid; gap: 12px; }
-.pack { position: relative; display: grid; gap: 4px; padding: 20px 18px; border: 1px solid var(--linea); background: var(--carbon); text-align: left; width: 100%; }
-.pack:hover { border-color: #4a4a4a; }
-.pack.activo { border-color: var(--hueso); }
+.pack { position: relative; display: grid; gap: 4px; padding: 20px 18px; border: 1px solid #3a3a3a; background: var(--carbon); color: var(--blanco); text-align: left; width: 100%; transition: border-color .2s, transform .2s; }
+.pack:hover, .pack:focus-visible { border-color: var(--hueso); transform: translateY(-2px); }
+.pack.activo { border-color: var(--hueso); box-shadow: inset 0 0 0 1px var(--hueso); }
+.pack-cta { margin-top: 8px; font-family: var(--f-codigo); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--hueso); }
 .pack-nombre { font-family: var(--f-display); font-size: 28px; text-transform: uppercase; line-height: 1; letter-spacing: .02em; }
 .pack-detalle { font-family: var(--f-codigo); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--olivo); }
 .pack-precio { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
@@ -346,7 +350,7 @@ a { color: inherit; }
   .scroller { grid-auto-columns: 32%; }
   .familia .scroller { grid-auto-columns: 34%; }
   .manifiesto-lista { grid-template-columns: repeat(2, 1fr); column-gap: 28px; }
-  .packs { grid-template-columns: repeat(3, 1fr); }
+  .packs { grid-template-columns: repeat(2, 1fr); }
   .pasos { grid-template-columns: repeat(2, 1fr); column-gap: 28px; }
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
   .panel { left: auto; top: 0; width: min(460px, 100%); max-height: none; border-top: 0; border-left: 1px solid var(--linea); transform: translateX(105%); }
@@ -361,11 +365,13 @@ a { color: inherit; }
   .hero-txt { position: static; padding: 0; }
   .hero-desk { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-block: 64px; }
   .hero h1 { font-size: clamp(72px, 8vw, 118px); }
+  .hero h1.titulos { font-size: clamp(56px, 6vw, 84px); }
   .hero-collage { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .hero-collage img { aspect-ratio: 4 / 5; width: 100%; object-fit: cover; border: 1px solid var(--linea); }
   .hero-collage img:nth-child(1) { grid-row: span 2; align-self: center; }
   .pasos { grid-template-columns: repeat(4, 1fr); }
   .manifiesto-lista { grid-template-columns: repeat(4, 1fr); }
+  .packs { grid-template-columns: repeat(4, 1fr); }
   .pasos li { grid-template-columns: 1fr; gap: 10px; }
   .fab { display: none; }
   .footer { padding-block: 56px; }
@@ -403,8 +409,12 @@ a { color: inherit; }
     <div class="wrap hero-desk">
       <div class="hero-txt">
         <span class="mono eyebrow">// Streetwear · Accesorios · Aromas</span>
-        <h1>Rompe la simulación.</h1>
-        <p>Piezas seleccionadas una por una. Calidad premium sin precios de plaza comercial.</p>
+        <!-- Títulos que se alternan. Puedes agregar o cambiar frases aquí -->
+        <h1 class="titulos" aria-live="polite">
+          <span class="on">No seguimos tendencias, las creamos.</span>
+          <span>Rompe la simulación.</span>
+        </h1>
+        <p>Calidad premium</p>
         <a class="btn btn-neon" href="#catalogo">Entra a La Familia</a>
       </div>
       <div class="hero-collage" aria-hidden="true">
@@ -529,8 +539,10 @@ a { color: inherit; }
       <div>
         <h4>Contacto</h4>
         <ul>
-          <li><a id="linkSoporte" href="#" target="_blank" rel="noopener">WhatsApp · <span data-tel></span></a></li>
+          <li><a id="linkSoporte" href="#" target="_blank" rel="noopener">WhatsApp</a></li>
           <li><a id="linkInsta" href="#" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a id="linkFace" href="#" target="_blank" rel="noopener">Facebook</a></li>
+          <li><a id="linkTiktok" href="#" target="_blank" rel="noopener">TikTok</a></li>
         </ul>
       </div>
     </div>
@@ -572,6 +584,8 @@ const CONFIG = {
   entrega: "1 a 4 días",
   zonas: ["Cuernavaca", "Jiutepec"],
   instagram: "https://instagram.com/",
+  facebook: "https://www.facebook.com/insanity.shopmx",
+  tiktok: "https://www.tiktok.com/@insanity.shopmx7",
   fotosFamilia: 15,              // busca familia-1 … familia-15; si falta un número, se lo salta
   // Apartados: pega aquí el link de tu Apps Script (termina en /exec). Vacío = solo WhatsApp, sin restar stock.
   apartadosURL: "",
@@ -610,6 +624,7 @@ const EJEMPLO = [
 const CATEGORIAS = {
   playeras:    { nombre: "Playeras Hombre", icono: "playera" },
   croptops:    { nombre: "Crop Tops", icono: "crop" },
+  bodys:       { nombre: "Bodys", icono: "body" },
   pantalonesH: { nombre: "Pantalones Hombre", icono: "pantalon" },
   pantalonesM: { nombre: "Pantalones Mujer", icono: "pantalon" },
   streetwear:  { nombre: "Streetwear", icono: "playera" },
@@ -630,6 +645,7 @@ const ICONOS = {
   bolsa:   '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 26h44v28H10z"/><path d="M14 26L26 6M50 26L38 6"/><path d="M10 34h44"/></svg>',
   bandolera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 30h36v22H14z"/><path d="M14 38h36"/><path d="M16 30L44 6M48 30L20 6" stroke-dasharray="2 3"/></svg>',
   crop:    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 10l-12 7 4 9 5-2v14h22V24l5 2 4-9-12-7c-1 3-4 5-8 5s-7-2-8-5z"/><path d="M21 38h22"/></svg>',
+  body:    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 8c0 5 3 8 8 8s8-3 8-8l8 6-3 10-5-2v18l-4 14h-8l-4-14V22l-5 2-3-10z"/><path d="M28 54h8"/></svg>',
   pantalon:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6h28l4 52H36l-4-34-4 34H14z"/><path d="M18 13h28"/></svg>',
   perfume: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M26 6h12v8H26z"/><path d="M29 14v6M35 14v6"/><path d="M18 20h28v38H18z"/><path d="M24 34h16v12H24z"/></svg>'
 };
@@ -662,6 +678,7 @@ function categoriaDe(txt) {
   if (t.includes("bandolera") || t.includes("crossbody") || t.includes("equipaje")) return "bandoleras";
   if (t.includes("bolsa") || t.includes("tote") || t.includes("mochila")) return "bolsas";
   if (t.includes("crop")) return "croptops";
+  if (t.includes("body")) return "bodys";
   if (t.includes("pantalon") || t.includes("jean") || t.includes("cargo") || t.includes("jogger"))
     return t.includes("mujer") || t.includes("dama") ? "pantalonesM" : "pantalonesH";
   if (t.includes("playera")) return "playeras";
@@ -813,7 +830,7 @@ function renderPacks() {
       <span class="pack-nombre">${esc(k.nombre)}</span>
       <span class="pack-detalle">${k.cantidad} ${LINEAS[linea]} · ${k.precio ? dinero(k.precio / k.cantidad) + " c/u" : textoDesc(k)}</span>
       <span class="pack-precio"><span class="desde">${k.precio ? "precio fijo" : "desde"}</span>${min * k.cantidad > nuevo ? `<span class="tachado">${dinero(min * k.cantidad)}</span>` : ""}<span class="nuevo">${dinero(nuevo)}</span></span>
-      ${sinStock ? '<span class="mono muted">Sin piezas suficientes por ahora</span>' : ""}
+      ${sinStock ? '<span class="mono muted">Sin piezas suficientes por ahora</span>' : `<span class="pack-cta">${activo ? "Aplicado en tu carrito" : "Elegir aromas →"}</span>`}
     </button>`;
   }).join("");
   const lineas = Object.keys(LINEAS).map(linea => {
@@ -1144,6 +1161,13 @@ document.addEventListener("input", e => {
 document.addEventListener("change", e => { if (e.target.id === "inZona") { datosEntrega.zona = e.target.value; refrescarLinkWhats(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
 
+/* ---------- Títulos del inicio: cambian cada 4 segundos ---------- */
+function rotarTitulos() {
+  const t = $$(".titulos span"); if (t.length < 2) return;
+  let i = 0;
+  setInterval(() => { t[i].classList.remove("on"); i = (i + 1) % t.length; t[i].classList.add("on"); }, 4000);
+}
+
 /* ---------- La Familia: carga las fotos que existan, en orden ---------- */
 async function cargarFamilia() {
   const cont = $("#galeriaFamilia");
@@ -1185,10 +1209,12 @@ async function diagnostico() {
   $$("[data-tel]").forEach(el => el.textContent = telVisible());
   $("#linkSoporte").href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Hola Insanity, tengo una duda.")}`;
   $("#linkInsta").href = CONFIG.instagram;
+  $("#linkFace").href = CONFIG.facebook;
+  $("#linkTiktok").href = CONFIG.tiktok;
   PRODUCTOS = await cargarProductos();
   limpiarCarrito(); actualizarContador();
   renderTop(); renderAromas(); renderTabs(); renderCatalogo();
-  cargarFamilia();
+  cargarFamilia(); rotarTitulos();
   if (location.hash === "#diagnostico") diagnostico();
 })();
 </script>
