@@ -243,6 +243,7 @@ a { color: inherit; }
 /* ---------- Footer ---------- */
 .footer { padding-block: 48px calc(48px + 70px); }
 .footer-grid { display: grid; gap: 30px; }
+.footer-logo-img { display: block; max-width: 240px; max-height: 80px; width: auto; height: auto; }
 .footer-logo { font-family: var(--f-display); font-size: 44px; line-height: .9; letter-spacing: .04em; }
 .footer h4 { font-family: var(--f-codigo); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--humo); font-weight: 400; margin: 0 0 12px; }
 .footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -344,7 +345,7 @@ a { color: inherit; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 18px; }
   .scroller { grid-auto-columns: 32%; }
   .familia .scroller { grid-auto-columns: 34%; }
-  .manifiesto-lista { grid-template-columns: repeat(3, 1fr); }
+  .manifiesto-lista { grid-template-columns: repeat(2, 1fr); column-gap: 28px; }
   .packs { grid-template-columns: repeat(3, 1fr); }
   .pasos { grid-template-columns: repeat(2, 1fr); column-gap: 28px; }
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
@@ -364,6 +365,7 @@ a { color: inherit; }
   .hero-collage img { aspect-ratio: 4 / 5; width: 100%; object-fit: cover; border: 1px solid var(--linea); }
   .hero-collage img:nth-child(1) { grid-row: span 2; align-self: center; }
   .pasos { grid-template-columns: repeat(4, 1fr); }
+  .manifiesto-lista { grid-template-columns: repeat(4, 1fr); }
   .pasos li { grid-template-columns: 1fr; gap: 10px; }
   .fab { display: none; }
   .footer { padding-block: 56px; }
@@ -475,12 +477,13 @@ a { color: inherit; }
   <section class="seccion" id="manifiesto">
     <div class="wrap">
       <div class="sec-head">
-        <div><span class="mono muted">Quiénes somos</span><h2>El manifiesto</h2></div>
+        <div><span class="mono muted">La esencia</span><h2>El manifiesto</h2></div>
       </div>
       <div class="manifiesto-lista">
-        <div><span class="mono eyebrow">El origen</span><h3>Nacimos del hustle</h3><p>Insanity sale de la calle, para quien exige calidad premium sin pagar los precios inflados de las plazas.</p></div>
-        <div><span class="mono eyebrow">La visión</span><h3>Ser el referente</h3><p>Queremos ser la referencia de la cultura urbana. Cada pieza es exclusiva y se elige con cuidado.</p></div>
-        <div><span class="mono eyebrow">El lazo</span><h3>Aquí no hay clientes</h3><p>Hay Familia. Cuando usas Insanity, ya eres parte.</p></div>
+        <div><span class="mono eyebrow">⚡ Quiénes somos</span><h3>Un movimiento, no una marca</h3><p>Nacimos del hustle diario para romper el molde de la moda masiva. Calidad premium, diseño impecable y actitud, sin precios inflados ni marcas frías.</p></div>
+        <div><span class="mono eyebrow">El origen</span><h3>Nacimos de la calle</h3><p>Streetwear de alta gama, accesorios y perfumería fina directo a ti. Sin intermediarios ni costos de plaza comercial. Cada pieza pasa nuestro filtro.</p></div>
+        <div><span class="mono eyebrow">La visión</span><h3>El nuevo referente</h3><p>Elevar el diseño local y unir la elegancia moderna con la autenticidad de la calle. Piezas que dan estatus a quien las viste.</p></div>
+        <div><span class="mono eyebrow">El lazo</span><h3>Aquí no hay clientes, hay Familia</h3><p>No eres un número de orden. Trato cercano, entregas en persona y una comunidad que pone la lealtad y el estilo por encima de todo.</p></div>
       </div>
     </div>
   </section>
@@ -511,8 +514,9 @@ a { color: inherit; }
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <div class="footer-logo">INSA<br>NITY</div>
-        <p class="muted" style="max-width:30ch;margin:14px 0 0">Menos ruido, más estilo. Cuernavaca, Morelos.</p>
+        <!-- Usa img/logo-footer.svg; si no existe, usa el logo de arriba -->
+        <img class="footer-logo-img" src="img/logo-footer.svg" alt="INSANITY" onerror="this.onerror=null;this.src='img/logo.svg'">
+        <p class="muted" style="max-width:30ch;margin:14px 0 0">Demasiado auténtico para ser normal.<br>Cuernavaca, Morelos.</p>
       </div>
       <div>
         <h4>Tienda</h4>
