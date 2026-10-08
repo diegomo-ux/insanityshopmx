@@ -38,6 +38,7 @@ El orden no importa; lo que importa es el nombre de la columna.
 | descripcion | Datos importantes: material, medidas, cómo queda, duración del aroma. Puedes usar saltos de línea (Alt + Enter) |
 | top | "si" para que salga en Lo más pesado |
 | activo | "no" para ocultarlo sin borrarlo |
+| sobrepedido | "si" = no lo tienes en stock pero lo consigues. Sale en la pestaña *Sobre pedido* y se entrega en 15 días (`CONFIG.diasPedido`) |
 | foto | Opcional. Vacío = usa `img/productos/CODIGO.jpg` |
 
 ### Categorías
@@ -51,6 +52,7 @@ El orden no importa; lo que importa es el nombre de la columna.
 | Streetwear | Streetwear (gorras, conjuntos, calcetas, pulseras y todo lo demás) |
 | Bandoleras | Bandoleras |
 | Bolsas | Bolsas |
+| Pines | Pines (con stock 0 siguen visibles como sobre pedido, 10 días: `CONFIG.diasPin`) |
 | Aromas Dama · Aromas Caballero · Aromas Unisex | Aromas (perfumes de 30 ml) |
 | Bolsillo Dama · Bolsillo Caballero | Aromas (de bolsillo / tipo lápiz) |
 

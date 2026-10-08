@@ -145,6 +145,10 @@ a { color: inherit; }
   font-family: var(--f-codigo); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
 }
 .card-tag.ultima { color: var(--hueso); border-color: var(--hueso); }
+.card-tag.pedido { color: #0d0d0d; background: var(--hueso); border-color: var(--hueso); }
+.aviso-pedido { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--hueso); font-size: 13px; line-height: 1.5; color: var(--blanco); }
+.aviso-pedido b { display: block; font-family: var(--f-codigo); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--hueso); margin-bottom: 4px; }
+.item-pedido { margin-top: 4px; font-family: var(--f-codigo); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--hueso); }
 .card-tag.agotado { color: var(--alerta); border-color: var(--alerta); }
 .card.sold .card-img img, .card.sold .ph { filter: grayscale(1) brightness(.5); }
 .card-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -589,7 +593,10 @@ const CONFIG = {
   fotosFamilia: 15,              // busca familia-1 … familia-15; si falta un número, se lo salta
   // Apartados: pega aquí el link de tu Apps Script (termina en /exec). Vacío = solo WhatsApp, sin restar stock.
   apartadosURL: "",
-  horasApartado: 24,             // solo para mostrarlo al cliente; el límite real se pone en el Apps Script
+  horasApartado: 24,
+  // Sobre pedido: días de entrega
+  diasPin: 10,                   // pines en stock 0: se hacen a mano
+  diasPedido: 15,                // artículos con "sobrepedido = si" en la Sheet             // solo para mostrarlo al cliente; el límite real se pone en el Apps Script
   // Paquetes de mayoreo de aromas. Cualquier combinación dentro de la misma línea.
   // linea "clasico" = perfumes de 30 ml · linea "bolsillo" = tipo lápiz / de bolsillo
   // descuento = pesos menos por pieza · precio = precio fijo del paquete completo
@@ -629,6 +636,7 @@ const CATEGORIAS = {
   pantalonesM: { nombre: "Pantalones Mujer", icono: "pantalon" },
   streetwear:  { nombre: "Streetwear", icono: "playera" },
   bandoleras: { nombre: "Bandoleras", icono: "bandolera" },
+  pines:      { nombre: "Pines", icono: "pin" },
   bolsas:     { nombre: "Bolsas", icono: "bolsa" },
   aromas:     { nombre: "Aromas", icono: "perfume" }
 };
@@ -645,6 +653,7 @@ const ICONOS = {
   bolsa:   '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 26h44v28H10z"/><path d="M14 26L26 6M50 26L38 6"/><path d="M10 34h44"/></svg>',
   bandolera: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 30h36v22H14z"/><path d="M14 38h36"/><path d="M16 30L44 6M48 30L20 6" stroke-dasharray="2 3"/></svg>',
   crop:    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 10l-12 7 4 9 5-2v14h22V24l5 2 4-9-12-7c-1 3-4 5-8 5s-7-2-8-5z"/><path d="M21 38h22"/></svg>',
+  pin:     '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="32" cy="30" r="18"/><path d="M32 18l3.5 7.5 8 1-6 5.5 1.6 8L32 36l-7.1 4 1.6-8-6-5.5 8-1z"/><path d="M32 48v10"/></svg>',
   body:    '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 8c0 5 3 8 8 8s8-3 8-8l8 6-3 10-5-2v18l-4 14h-8l-4-14V22l-5 2-3-10z"/><path d="M28 54h8"/></svg>',
   pantalon:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6h28l4 52H36l-4-34-4 34H14z"/><path d="M18 13h28"/></svg>',
   perfume: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M26 6h12v8H26z"/><path d="M29 14v6M35 14v6"/><path d="M18 20h28v38H18z"/><path d="M24 34h16v12H24z"/></svg>'
@@ -662,7 +671,7 @@ const lineaDe = txt => /bolsillo|lapiz|pluma/.test(sinAcentos(txt)) ? "bolsillo"
 
 /* Tallas: "S,M,L" (stock total) o "S:1, M:2, L:0" (stock por talla) */
 function leerTallas(txt, stockTxt) {
-  const partes = String(txt || "").split(/[,/]/).map(t => t.trim()).filter(t => t && !/^(unica|única|n\/a|-)$/i.test(t));
+  const partes = String(txt || "").split(",").map(t => t.trim()).filter(t => t && !/^(unica|única|n\/a|-)$/i.test(t));
   if (partes.some(t => t.includes(":"))) {
     const stockTalla = {};
     partes.forEach(t => { const [k, v] = t.split(":"); stockTalla[k.trim().toUpperCase()] = Math.max(0, parseInt(v, 10) || 0); });
@@ -677,6 +686,7 @@ function categoriaDe(txt) {
   if (t.includes("aroma") || t.includes("perfum") || t.includes("bolsillo") || t.includes("lapiz")) return "aromas";
   if (t.includes("bandolera") || t.includes("crossbody") || t.includes("equipaje")) return "bandoleras";
   if (t.includes("bolsa") || t.includes("tote") || t.includes("mochila")) return "bolsas";
+  if (/\bpin(es)?\b/.test(t)) return "pines";
   if (t.includes("crop")) return "croptops";
   if (t.includes("body")) return "bodys";
   if (t.includes("pantalon") || t.includes("jean") || t.includes("cargo") || t.includes("jogger"))
@@ -698,7 +708,18 @@ function siguienteFoto(img) {
   else img.remove();
 }
 
+/* Sobre pedido: artículos marcados en la Sheet, o pines sin stock (se hacen a mano) */
+const bajoPedido = p => !!p && (p.pedido || (p.categoria === "pines" && p.stock <= 0));
+const diasDe = p => p.pedido ? CONFIG.diasPedido : CONFIG.diasPin;
+const MAX_PEDIDO = 20;
+function textoPedido(p) {
+  return p.categoria === "pines"
+    ? `Encarga este pin y se entrega en ${diasDe(p)} días, ya que se hacen a mano.`
+    : `Lo conseguimos para ti. Se entrega en ${diasDe(p)} días.`;
+}
+
 function estadoStock(p) {
+  if (bajoPedido(p)) return { clase: "pedido", txt: "Sobre pedido" };
   if (p.stock <= 0) return { clase: "agotado", txt: "Agotado" };
   if (p.stock === 1) return { clase: "ultima", txt: "Última pieza" };
   if (p.stock <= 3) return { clase: "", txt: `Quedan ${p.stock}` };
@@ -744,6 +765,7 @@ function normalizar(p, desdeSheet) {
     codigo,
     nombre: String(p.nombre || codigo).trim(),
     descripcion: String(p.descripcion || "").trim(),
+    pedido: typeof p.sobrepedido === "boolean" ? p.sobrepedido : si(p.sobrepedido),
     categoria: categoriaDe(p.categoria),
     precio: Number(String(p.precio).replace(/[^0-9.]/g, "")) || 0,
     ...leerTallas(p.tallas, p.stock),
@@ -780,7 +802,7 @@ async function cargarProductos() {
 /* ---------- render de tarjetas ---------- */
 function tarjeta(p) {
   const est = estadoStock(p);
-  return `<button class="card${p.stock <= 0 ? " sold" : ""}" type="button" data-codigo="${esc(p.codigo)}">
+  return `<button class="card${p.stock <= 0 && !bajoPedido(p) ? " sold" : ""}" type="button" data-codigo="${esc(p.codigo)}">
     <div class="card-img">${imagenHTML(p)}${est ? `<span class="card-tag ${est.clase}">${est.txt}</span>` : ""}</div>
     <div class="card-info">
       <span class="mono muted">${esc(etiquetaCat(p))}</span>
@@ -855,12 +877,14 @@ function renderChips() {
     `<button class="chip" type="button" data-genero="${k}" aria-pressed="${filtroGenero === k}">${n}</button>`).join("");
 }
 
-const ordenar = lista => [...lista].sort((a, b) => (a.stock <= 0) - (b.stock <= 0));
+const nivel = p => p.stock > 0 && !p.pedido ? 0 : bajoPedido(p) ? 1 : 2;   // en stock, sobre pedido, agotado
+const ordenar = lista => [...lista].sort((a, b) => nivel(a) - nivel(b));
 let filtro = "todo";
 
 function renderTop() {
-  let top = PRODUCTOS.filter(p => p.top && p.stock > 0);
-  if (top.length < 4) top = top.concat(PRODUCTOS.filter(p => !top.includes(p) && p.stock > 0)).slice(0, 4);
+  const enStock = p => p.stock > 0 && !p.pedido;
+  let top = PRODUCTOS.filter(p => p.top && enStock(p));
+  if (top.length < 4) top = top.concat(PRODUCTOS.filter(p => !top.includes(p) && enStock(p))).slice(0, 4);
   $("#gridTop").innerHTML = top.slice(0, 4).map(tarjeta).join("");
 }
 function renderAromas() {
@@ -870,14 +894,16 @@ function renderAromas() {
   $("#scrollAromas").innerHTML = a.map(tarjeta).join("");
   renderChips(); renderPacks();
 }
+const enTab = (p, k) => k === "todo" || (k === "pedido" ? p.pedido : p.categoria === k && !p.pedido);
 function renderTabs() {
-  const cuenta = k => k === "todo" ? PRODUCTOS.length : PRODUCTOS.filter(p => p.categoria === k).length;
-  const opciones = [["todo", "Todo"], ...Object.entries(CATEGORIAS).filter(([k]) => cuenta(k) > 0).map(([k, v]) => [k, v.nombre])];
+  const cuenta = k => PRODUCTOS.filter(p => enTab(p, k)).length;
+  const opciones = [["todo", "Todo"], ...Object.entries(CATEGORIAS).filter(([k]) => cuenta(k) > 0).map(([k, v]) => [k, v.nombre]),
+    ...(cuenta("pedido") ? [["pedido", "Sobre pedido"]] : [])];
   $("#tabs").innerHTML = opciones.map(([k, n]) =>
     `<button class="tab" type="button" data-filtro="${k}" aria-pressed="${filtro === k}">${n}<span class="n">${cuenta(k)}</span></button>`).join("");
 }
 function renderCatalogo() {
-  const lista = ordenar(filtro === "todo" ? PRODUCTOS : PRODUCTOS.filter(p => p.categoria === filtro));
+  const lista = ordenar(PRODUCTOS.filter(p => enTab(p, filtro)));
   $("#gridCatalogo").innerHTML = lista.map(tarjeta).join("");
 }
 
@@ -890,12 +916,13 @@ const enCarrito = codigo => carrito.filter(i => i.codigo === codigo).reduce((s, 
 const enCarritoTalla = (codigo, talla) => carrito.filter(i => i.codigo === codigo && i.talla === talla).reduce((s, i) => s + i.cant, 0);
 /* Piezas que aún se pueden agregar (por talla si la hoja trae stock por talla) */
 function disponible(p, talla) {
+  if (bajoPedido(p)) return MAX_PEDIDO - enCarrito(p.codigo);
   if (p.stockTalla && talla) return (p.stockTalla[talla] || 0) - enCarritoTalla(p.codigo, talla);
   return p.stock - enCarrito(p.codigo);
 }
 
 function limpiarCarrito() {
-  carrito = carrito.filter(i => buscar(i.codigo) && buscar(i.codigo).stock > 0);
+  carrito = carrito.filter(i => buscar(i.codigo) && (buscar(i.codigo).stock > 0 || bajoPedido(buscar(i.codigo))));
   carrito.forEach(i => { const p = buscar(i.codigo); const sobra = -disponible(p, i.talla); if (sobra > 0) i.cant -= sobra; });
   carrito = carrito.filter(i => i.cant > 0);
   guardar();
@@ -933,12 +960,21 @@ function totales() {
 let datosEntrega = { nombre: "", zona: "" };
 try { datosEntrega = Object.assign(datosEntrega, JSON.parse(localStorage.getItem("insanity-datos") || "{}")); } catch (e) {}
 
+/* Tiempo de entrega según lo que haya en el carrito */
+function entregaTexto() {
+  const dias = carrito.map(i => buscar(i.codigo)).filter(bajoPedido).map(diasDe);
+  const hayStock = carrito.some(i => !bajoPedido(buscar(i.codigo)));
+  if (!dias.length) return `Entrega: ${CONFIG.entrega}`;
+  const max = Math.max(...dias);
+  return hayStock ? `Entrega: ${CONFIG.entrega} las piezas en stock; las piezas sobre pedido en ${max} días` : `Entrega: ${max} días (sobre pedido)`;
+}
+
 function mensajeWhatsApp(folio) {
   const t = totales();
   const lineas = carrito.map(i => {
     const p = buscar(i.codigo);
     const u = precioUnit(p);
-    return `• ${i.cant}x ${p.nombre} (${p.codigo})${i.talla ? " · Talla " + i.talla : ""}${p.categoria === "aromas" && p.genero ? " · " + GENEROS[p.genero] : ""} — ${i.cant > 1 ? dinero(u) + " c/u = " : ""}${dinero(u * i.cant)}`;
+    return `• ${i.cant}x ${p.nombre} (${p.codigo})${bajoPedido(p) ? ` · SOBRE PEDIDO (${diasDe(p)} días)` : ""}${i.talla ? " · Talla " + i.talla : ""}${p.categoria === "aromas" && p.genero ? " · " + GENEROS[p.genero] : ""} — ${i.cant > 1 ? dinero(u) + " c/u = " : ""}${dinero(u * i.cant)}`;
   });
   return [
     "🔥 *PEDIDO INSANITY*" + (folio ? ` · Folio ${folio}` : ""),
@@ -951,7 +987,7 @@ function mensajeWhatsApp(folio) {
     `*TOTAL: ${dinero(t.total)} MXN*`,
     `Anticipo 50%: ${dinero(t.anticipo)} por transferencia`,
     `Restante: ${dinero(t.resto)} al recibir (efectivo o transferencia)`,
-    `Entrega: ${CONFIG.entrega}`,
+    entregaTexto(),
     "",
     folio ? `Mis piezas quedan apartadas ${CONFIG.horasApartado} horas. ¿Me pasas los datos para el anticipo?` : "Quiero apartar mi pedido. ¿Me pasas los datos para el anticipo?"
   ].filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n");
@@ -974,6 +1010,7 @@ function renderCarrito() {
       <div>
         <div class="item-name">${esc(p.nombre)}</div>
         <div class="mono muted">${esc(p.codigo)}${i.talla ? " · Talla " + esc(i.talla) : ""}${p.categoria === "aromas" && p.genero ? " · " + GENEROS[p.genero] : ""}</div>
+        ${bajoPedido(p) ? `<div class="item-pedido">Sobre pedido · entrega en ${diasDe(p)} días</div>` : ""}
         <div class="qty"><button type="button" data-menos="${idx}" aria-label="Quitar uno">−</button><span>${i.cant}</span><button type="button" data-mas="${idx}" aria-label="Agregar uno" ${lleno ? "disabled" : ""}>+</button></div>
         <div><button class="quitar" type="button" data-quitar="${idx}">Quitar</button></div>
       </div>
@@ -993,7 +1030,9 @@ function renderCarrito() {
       <div class="campo"><label for="inZona">Zona de entrega</label><select id="inZona"><option value="">Elige tu zona</option>${zonas}</select></div>
       <div class="mini-reglas">
         <span>Se aparta con el <b>50%</b> por transferencia${CONFIG.apartadosURL ? `; tus piezas se guardan <b>${CONFIG.horasApartado} horas</b>` : ""}.</span>
-        <span>Entregamos en <b>${esc(CONFIG.entrega)}</b> en ${esc(CONFIG.zonas.join(" y "))}.</span>
+        <span>${carrito.some(i => bajoPedido(buscar(i.codigo)))
+          ? `<b>Tienes piezas sobre pedido.</b> ${esc(entregaTexto().replace("Entrega: ", ""))}, en ${esc(CONFIG.zonas.join(" y "))}.`
+          : `Entregamos en <b>${esc(CONFIG.entrega)}</b> en ${esc(CONFIG.zonas.join(" y "))}.`}</span>
         <span>El resto lo pagas <b>el día de la entrega</b>.</span>
       </div>
     </div>`;
@@ -1012,7 +1051,7 @@ async function apartar() {
   const t = totales();
   const pedido = {
     nombre: datosEntrega.nombre, zona: datosEntrega.zona,
-    items: carrito.map(i => ({ codigo: i.codigo, talla: i.talla || "", cant: i.cant, nombre: buscar(i.codigo).nombre })),
+    items: carrito.map(i => ({ codigo: i.codigo, talla: i.talla || "", cant: i.cant, nombre: buscar(i.codigo).nombre, pedido: bajoPedido(buscar(i.codigo)) })),
     total: t.total, anticipo: t.anticipo, resumen: mensajeWhatsApp()
   };
   let r;
@@ -1070,7 +1109,7 @@ function cerrar(rapido) {
 let fichaActual = null, tallaElegida = null, cantFicha = 1;
 function abrirFicha(codigo) {
   const p = buscar(codigo); if (!p) return;
-  const conStock = p.tallas.filter(t => !p.stockTalla || p.stockTalla[t] > 0);
+  const conStock = p.tallas.filter(t => bajoPedido(p) || !p.stockTalla || p.stockTalla[t] > 0);
   fichaActual = p; cantFicha = 1; tallaElegida = conStock.length === 1 ? conStock[0] : null;
   const est = estadoStock(p);
   $("#fichaCodigo").textContent = p.codigo;
@@ -1080,12 +1119,13 @@ function abrirFicha(codigo) {
       <span class="mono muted">${esc(etiquetaCat(p))}</span>
       <h4 id="fichaTitulo">${esc(p.nombre)}</h4>
       <span class="precio" data-precio="${esc(p.codigo)}">${precioHTML(p)}</span>
-      <div class="stock-line"><span class="dot${p.stock <= 0 ? " rojo" : ""}"></span>${p.stock <= 0 ? "Agotado por ahora" : est ? est.txt : "Disponible"}</div>
+      <div class="stock-line"><span class="dot${p.stock <= 0 && !bajoPedido(p) ? " rojo" : ""}"></span>${bajoPedido(p) ? "Sobre pedido" : p.stock <= 0 ? "Agotado por ahora" : est ? est.txt : "Disponible"}</div>
+      ${bajoPedido(p) ? `<div class="aviso-pedido"><b>Sobre pedido · ${diasDe(p)} días</b>${esc(textoPedido(p))}</div>` : ""}
       ${p.descripcion ? `<p class="descripcion">${esc(p.descripcion)}</p>` : ""}
     </div>
     ${p.tallas.length ? `<div><span class="mono muted">Talla</span><div class="tallas">${p.tallas.map(t =>
-      `<button class="talla" type="button" data-talla="${esc(t)}" aria-pressed="${tallaElegida === t}" ${p.stockTalla && !p.stockTalla[t] ? "disabled" : ""}>${esc(t)}</button>`).join("")}</div><div class="aviso" id="avisoTalla"></div></div>` : ""}
-    ${p.stock > 1 ? `<div><span class="mono muted">Cantidad</span><div class="cant-ficha"><div class="qty"><button type="button" data-cant="-1" aria-label="Menos">−</button><span id="cantFicha">1</span><button type="button" data-cant="1" aria-label="Más">+</button></div><span class="mono muted" id="dispFicha"></span></div></div>` : ""}`;
+      `<button class="talla" type="button" data-talla="${esc(t)}" aria-pressed="${tallaElegida === t}" ${p.stockTalla && !p.stockTalla[t] && !bajoPedido(p) ? "disabled" : ""}>${esc(t)}</button>`).join("")}</div><div class="aviso" id="avisoTalla"></div></div>` : ""}
+    ${p.stock > 1 || bajoPedido(p) ? `<div><span class="mono muted">Cantidad</span><div class="cant-ficha"><div class="qty"><button type="button" data-cant="-1" aria-label="Menos">−</button><span id="cantFicha">1</span><button type="button" data-cant="1" aria-label="Más">+</button></div><span class="mono muted" id="dispFicha"></span></div></div>` : ""}`;
   actualizarBotonAgregar();
   abrir($("#panelFicha"));
 }
@@ -1095,11 +1135,11 @@ function actualizarBotonAgregar() {
   cantFicha = Math.max(1, Math.min(cantFicha, Math.max(1, disp)));
   if ($("#cantFicha")) {
     $("#cantFicha").textContent = cantFicha;
-    $("#dispFicha").textContent = p.stockTalla && !tallaElegida ? "Elige talla" : `${Math.max(0, disp)} disponibles`;
+    $("#dispFicha").textContent = bajoPedido(p) ? `Entrega en ${diasDe(p)} días` : p.stockTalla && !tallaElegida ? "Elige talla" : `${Math.max(0, disp)} disponibles`;
   }
-  if (p.stock <= 0) { b.textContent = "Agotado"; b.disabled = true; return; }
+  if (p.stock <= 0 && !bajoPedido(p)) { b.textContent = "Agotado"; b.disabled = true; return; }
   if (disp <= 0 && (!p.stockTalla || tallaElegida)) { b.textContent = "Ya tienes todas las piezas"; b.disabled = true; return; }
-  b.disabled = false; b.textContent = `Agregar ${cantFicha > 1 ? cantFicha + " " : ""}al carrito · ` + dinero(p.precio * cantFicha);
+  b.disabled = false; b.textContent = (bajoPedido(p) ? `Encargar ${cantFicha > 1 ? cantFicha + " " : ""}· ` : `Agregar ${cantFicha > 1 ? cantFicha + " " : ""}al carrito · `) + dinero(p.precio * cantFicha);
 }
 
 /* ---------- toast ---------- */
