@@ -52,9 +52,11 @@ El orden no importa; lo que importa es el nombre de la columna.
 | Streetwear | Streetwear (gorras, conjuntos, calcetas, pulseras y todo lo demás) |
 | Bandoleras | Bandoleras |
 | Bolsas | Bolsas |
-| Pines | Pines (con stock 0 siguen visibles como sobre pedido, 10 días: `CONFIG.diasPin`) |
+| Pines | Pines (con stock 0 siguen visibles como sobre pedido, 10 días) |
 | Aromas Dama · Aromas Caballero · Aromas Unisex | Aromas (perfumes de 30 ml) |
 | Bolsillo Dama · Bolsillo Caballero | Aromas (de bolsillo / tipo lápiz) |
+
+**Al llegar a stock 0:** pines y perfumes (dama, caballero y bolsillo) pasan solos a *sobre pedido*; lo demás se marca *Agotado*. Se cambia en `CONFIG.alAgotarse` (categoría: días de entrega).
 
 Las pestañas vacías no se muestran. Para cambiar el orden o el nombre de una pestaña, edita `CATEGORIAS` en `index.html`.
 
@@ -86,7 +88,7 @@ Si después cambias el código del script: Implementar → Administrar implement
 
 - Solo cambia la columna **Estado** con el menú. La columna *Stock* la llena el script: `sin restar`, `restado ✓` o `regresado`.
 - Si al poner *pagado* sale `⚠ falta stock`, alguien más se llevó la pieza antes. Corrige el stock o habla con el cliente, y vuelve a elegir *pagado*.
-- Las piezas sobre pedido (pines en 0 o `sobrepedido = si`) nunca restan stock.
+- Las piezas sobre pedido (pines y perfumes en 0, o `sobrepedido = si`) nunca restan stock.
 - Avisos por Telegram (opcional): crea un bot con @BotFather y llena `TELEGRAM_TOKEN` y `TELEGRAM_CHAT`.
 
 ## Paquetes de mayoreo (aromas)

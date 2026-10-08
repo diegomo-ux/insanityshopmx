@@ -9,14 +9,16 @@ const AJUSTES = {
   CORREO: "",                    // vacío = te llega a tu propio Gmail
   TELEGRAM_TOKEN: "",            // opcional: token de tu bot de Telegram
   TELEGRAM_CHAT: "",             // opcional: tu chat id
-  MAX_PIEZAS: 60                 // freno para pedidos falsos
+  MAX_PIEZAS: 60,                // freno para pedidos falsos
+  // Categorías que pasan a "sobre pedido" al llegar a 0 (igual que alAgotarse en la web)
+  AL_AGOTARSE: /\bpin(es)?\b|aroma|perfum|bolsillo|lapiz/
 };
 
 /* Cómo funciona:
    1. El cliente aparta en la web → llega una fila "pendiente" aquí y un correo. NO se resta stock.
    2. Te manda la captura del anticipo → cambias Estado a "pagado" → se resta del stock.
    3. Si se cae la venta → "cancelado" → las piezas regresan al stock.
-   Las piezas sobre pedido (pines en 0 o sobrepedido = si) nunca restan stock. */
+   Las piezas sobre pedido (pines y perfumes en 0, o sobrepedido = si) nunca restan stock. */
 const ESTADOS = ["pendiente", "pagado", "entregado", "cancelado"];
 const COLS = ["Folio", "Fecha", "Nombre", "Zona", "Piezas", "Total", "Anticipo", "Estado", "Stock", "Items"];
 const C = Object.fromEntries(COLS.map((c, i) => [c, i + 1]));   // número de columna por nombre
@@ -151,13 +153,13 @@ function tallasConStock(txt) {
   return partes.map(t => { const [k, v] = t.split(":"); return [k.trim(), Math.max(0, parseInt(v, 10) || 0)]; });
 }
 
-/* Sobre pedido: columna sobrepedido = si, o un pin con stock en 0 */
+/* Sobre pedido: columna sobrepedido = si, o pin/perfume con stock en 0 */
 function esSobrePedido(prod, i) {
   const k = filaDe(prod, i.codigo); if (k < 0) return false;
   const fila = prod.datos[k];
   if (prod.col.sobrepedido >= 0 && ["si", "sí", "x", "1", "true"].includes(norm(fila[prod.col.sobrepedido]))) return true;
-  const esPin = prod.col.categoria >= 0 && /\bpin(es)?\b/.test(norm(fila[prod.col.categoria]));
-  return esPin && disponible(prod, { codigo: i.codigo, talla: "" }) <= 0;
+  const auto = prod.col.categoria >= 0 && AJUSTES.AL_AGOTARSE.test(norm(fila[prod.col.categoria]));
+  return auto && disponible(prod, { codigo: i.codigo, talla: "" }) <= 0;
 }
 
 function disponible(prod, i) {

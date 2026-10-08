@@ -594,8 +594,10 @@ const CONFIG = {
   // Apartados: pega aquí el link de tu Apps Script (termina en /exec). Vacío = solo WhatsApp, sin restar stock.
   apartadosURL: "https://script.google.com/macros/s/AKfycbw4Uro7Gg9jRGgop03WdhvY_-bPio3D9gTrVlYKNe4s3u7beVxnFdNow9fltWJomhBV/exec",
   // Sobre pedido: días de entrega
-  diasPin: 10,                   // pines en stock 0: se hacen a mano
-  diasPedido: 15,                // artículos con "sobrepedido = si" en la Sheet             // solo para mostrarlo al cliente; el límite real se pone en el Apps Script
+  // Categorías que pasan solas a "sobre pedido" cuando su stock llega a 0 (y días de entrega).
+  // Las que no estén aquí (bolsas, ropa…) se marcan "Agotado" al llegar a 0.
+  alAgotarse: { pines: 10, aromas: 15 },   // aromas = perfumes de dama, caballero y bolsillo
+  diasPedido: 15,                // artículos con "sobrepedido = si" en la Sheet (siempre sobre pedido)
   // Paquetes de mayoreo de aromas. Cualquier combinación dentro de la misma línea.
   // linea "clasico" = perfumes de 30 ml · linea "bolsillo" = tipo lápiz / de bolsillo
   // descuento = pesos menos por pieza · precio = precio fijo del paquete completo
@@ -708,13 +710,13 @@ function siguienteFoto(img) {
 }
 
 /* Sobre pedido: artículos marcados en la Sheet, o pines sin stock (se hacen a mano) */
-const bajoPedido = p => !!p && (p.pedido || (p.categoria === "pines" && p.stock <= 0));
-const diasDe = p => p.pedido ? CONFIG.diasPedido : CONFIG.diasPin;
+const bajoPedido = p => !!p && (p.pedido || (p.stock <= 0 && !!CONFIG.alAgotarse[p.categoria]));
+const diasDe = p => p.pedido ? CONFIG.diasPedido : (CONFIG.alAgotarse[p.categoria] || CONFIG.diasPedido);
 const MAX_PEDIDO = 20;
 function textoPedido(p) {
-  return p.categoria === "pines"
-    ? `Encarga este pin y se entrega en ${diasDe(p)} días, ya que se hacen a mano.`
-    : `Lo conseguimos para ti. Se entrega en ${diasDe(p)} días.`;
+  if (p.categoria === "pines") return `Encarga este pin y se entrega en ${diasDe(p)} días, ya que se hacen a mano.`;
+  if (p.pedido) return `Lo conseguimos para ti. Se entrega en ${diasDe(p)} días.`;
+  return `Se nos acabó por ahora, pero te lo encargamos. Se entrega en ${diasDe(p)} días.`;
 }
 
 function estadoStock(p) {
@@ -836,14 +838,15 @@ function refrescarPrecios() {
   $$("[data-precio]").forEach(el => { const p = buscar(el.dataset.precio); if (p) el.innerHTML = precioHTML(p); });
 }
 function renderPacks() {
-  const visibles = CONFIG.paquetes.filter(k => PRODUCTOS.some(p => esAroma(p, k.linea || "clasico") && p.stock > 0));
+  const pedible = p => p.stock > 0 || bajoPedido(p);
+  const visibles = CONFIG.paquetes.filter(k => PRODUCTOS.some(p => esAroma(p, k.linea || "clasico") && pedible(p)));
   $("#mayoreo").hidden = !visibles.length;
   if (!visibles.length) return;
   $("#packs").innerHTML = visibles.map((k, i) => {
     const linea = k.linea || "clasico";
-    const aromas = PRODUCTOS.filter(p => esAroma(p, linea) && p.stock > 0);
+    const aromas = PRODUCTOS.filter(p => esAroma(p, linea) && pedible(p));
     const min = Math.min(...aromas.map(p => p.precio));
-    const sinStock = aromas.reduce((s, p) => s + p.stock, 0) < k.cantidad;
+    const sinStock = aromas.reduce((s, p) => s + (bajoPedido(p) ? MAX_PEDIDO : p.stock), 0) < k.cantidad;
     const activo = packActivo(linea) === k;
     const nuevo = k.precio ? k.precio : (min - k.descuento) * k.cantidad;
     return `<button class="pack${activo ? " activo" : ""}" type="button" data-pack="${CONFIG.paquetes.indexOf(k)}" ${sinStock ? 'aria-disabled="true" style="opacity:.45"' : ""}>
