@@ -1070,6 +1070,11 @@ async function apartar() {
     location.href = url;
     return;
   }
+  // Cualquier otro error del script: no perdemos la venta, se manda por WhatsApp
+  if (!r.faltantes || !r.faltantes.length) {
+    location.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp())}`;
+    return;
+  }
   // Alguien ganó la pieza: ajustamos el stock local y el carrito
   (r.faltantes || []).forEach(x => {
     const p = buscar(x.codigo); if (!p) return;
