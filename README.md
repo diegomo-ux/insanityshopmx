@@ -60,14 +60,14 @@ Las pestañas vacías no se muestran. Para cambiar el orden o el nombre de una p
 
 Los cambios en la Sheet tardan unos 5 minutos en verse (Google guarda caché).
 
-## 3. Apartados (restar stock automático)
+## 3. Apartados (el stock se resta cuando confirmas el pago)
 
-Cuando un cliente da clic en **Apartar**, las piezas se restan de la Sheet, se guardan en la pestaña *Apartados* y te llega un correo. Tú decides si se venden o se regresan.
+Cuando un cliente da clic en **Apartar**, su pedido llega a la pestaña *Apartados* de la Sheet y te llega un correo. **No se resta nada todavía.** Cuando el cliente te manda la captura del anticipo por WhatsApp, cambias el estado a **pagado** y en ese momento se resta del stock.
 
 ### Instalar (una sola vez)
 
 1. En tu Google Sheet de productos: Extensiones → Apps Script.
-2. Borra lo que haya y pega todo `apartados.gs`. Guarda.
+2. Borra lo que haya y pega todo `apartados.gs` (está en este repo). Guarda.
 3. Revisa `GID_PRODUCTOS`: es el número después de `gid=` en el link de tu pestaña de productos.
 4. Elige la función `instalar` arriba y da ▶ Ejecutar. Acepta los permisos (te dirá "app no verificada": Avanzado → Ir al proyecto).
 5. Implementar → Nueva implementación → tipo **App web** → Ejecutar como: *Yo* → Quién tiene acceso: *Cualquier usuario* → Implementar.
@@ -79,14 +79,14 @@ Si después cambias el código del script: Implementar → Administrar implement
 
 | Estado | Qué pasa con el stock |
 |---|---|
-| pendiente | Las piezas ya están restadas; nadie más las puede apartar |
-| pagado | Te transfirió: la venta queda confirmada |
-| cancelado | Las piezas regresan al stock |
-| vencido | El script lo pone solo si pasan las horas sin pago, y regresa las piezas |
+| pendiente | Llegó el pedido. No se ha restado nada |
+| pagado | Te mandó la captura: **se resta del stock** |
+| entregado | Ya lo entregaste (si no estaba restado, se resta) |
+| cancelado | Si ya estaba restado, las piezas regresan al stock |
 
-- Solo cambia la columna **Estado** con el menú. La columna *Stock* la llena el script.
-- No regreses un apartado de *cancelado* a *pendiente*: el stock ya se devolvió. Pide al cliente que aparte de nuevo.
-- El tiempo de apartado se cambia en `HORAS` del script y en `CONFIG.horasApartado` de la web (pon el mismo número en los dos).
+- Solo cambia la columna **Estado** con el menú. La columna *Stock* la llena el script: `sin restar`, `restado ✓` o `regresado`.
+- Si al poner *pagado* sale `⚠ falta stock`, alguien más se llevó la pieza antes. Corrige el stock o habla con el cliente, y vuelve a elegir *pagado*.
+- Las piezas sobre pedido (pines en 0 o `sobrepedido = si`) nunca restan stock.
 - Avisos por Telegram (opcional): crea un bot con @BotFather y llena `TELEGRAM_TOKEN` y `TELEGRAM_CHAT`.
 
 ## Paquetes de mayoreo (aromas)

@@ -6,17 +6,22 @@
 const AJUSTES = {
   GID_PRODUCTOS: 2031985658,     // número "gid=" del link de tu pestaña de productos
   PESTANA_APARTADOS: "Apartados",
-  HORAS: 24,                     // tiempo que se guarda un apartado sin pagar
   CORREO: "",                    // vacío = te llega a tu propio Gmail
   TELEGRAM_TOKEN: "",            // opcional: token de tu bot de Telegram
   TELEGRAM_CHAT: "",             // opcional: tu chat id
   MAX_PIEZAS: 60                 // freno para pedidos falsos
 };
 
-const ESTADOS = ["pendiente", "pagado", "cancelado", "vencido"];
-const COLS = ["Folio", "Fecha", "Vence", "Nombre", "Zona", "Piezas", "Total", "Anticipo", "Estado", "Stock", "Items"];
+/* Cómo funciona:
+   1. El cliente aparta en la web → llega una fila "pendiente" aquí y un correo. NO se resta stock.
+   2. Te manda la captura del anticipo → cambias Estado a "pagado" → se resta del stock.
+   3. Si se cae la venta → "cancelado" → las piezas regresan al stock.
+   Las piezas sobre pedido (pines en 0 o sobrepedido = si) nunca restan stock. */
+const ESTADOS = ["pendiente", "pagado", "entregado", "cancelado"];
+const COLS = ["Folio", "Fecha", "Nombre", "Zona", "Piezas", "Total", "Anticipo", "Estado", "Stock", "Items"];
 const C = Object.fromEntries(COLS.map((c, i) => [c, i + 1]));   // número de columna por nombre
 const ZONA = "America/Mexico_City";
+const STOCK = { sin: "sin restar", restado: "restado ✓", regresado: "regresado" };
 
 /* ---------- 1. Corre esta función UNA vez (botón ▶ Ejecutar) ---------- */
 function instalar() {
@@ -27,14 +32,15 @@ function instalar() {
   h.setFrozenRows(1);
   h.getRange(2, C.Estado, 999, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(ESTADOS, true).build());
+  h.getRange(2, C.Piezas, 999, 1).setWrap(true);
+  h.setColumnWidth(C.Piezas, 320);
   h.hideColumns(C.Items);
   ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger("revisarVencidos").timeBased().everyHours(1).create();
   ScriptApp.newTrigger("alEditar").forSpreadsheet(ss).onEdit().create();
   Logger.log("Listo. Ahora: Implementar → Nueva implementación → App web.");
 }
 
-/* ---------- 2. La web manda aquí cada apartado ---------- */
+/* ---------- 2. La web manda aquí cada pedido (no resta stock) ---------- */
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -46,34 +52,26 @@ function doPost(e) {
     if (piezas > AJUSTES.MAX_PIEZAS) return json({ ok: false, error: "Para pedidos tan grandes escríbenos por WhatsApp." });
     if (!String(pedido.nombre || "").trim()) return json({ ok: false, error: "Falta tu nombre." });
 
+    // Revisa que haya stock ahorita (la web puede traer datos de hace unos minutos)
     const prod = leerProductos();
-    const faltantes = [];
-    items.forEach(i => { i.pedido = esSobrePedido(prod, i); });   // sobre pedido: no se revisa ni se resta stock
-    items.filter(i => !i.pedido).forEach(i => {
-      const disp = disponible(prod, i);
-      if (disp < i.cant) faltantes.push({ codigo: i.codigo, talla: i.talla, disponible: Math.max(0, disp) });
-    });
+    items.forEach(i => { i.pedido = esSobrePedido(prod, i); });
+    const faltantes = revisarStock(prod, items);
     if (faltantes.length) return json({ ok: false, faltantes });
-
-    items.filter(i => !i.pedido).forEach(i => mover(prod, i, -i.cant));
-    escribirProductos(prod);
 
     const h = hojaApartados();
     const fila = h.getLastRow() + 1;
     const folio = "A" + String(fila - 1).padStart(4, "0");
-    const ahora = new Date();
-    const vence = new Date(ahora.getTime() + AJUSTES.HORAS * 3600 * 1000);
     const texto = items.map(i => `${i.cant}x ${i.nombre || i.codigo} (${i.codigo})${i.talla ? " " + i.talla : ""}${i.pedido ? " · SOBRE PEDIDO" : ""}`).join("\n");
     h.getRange(fila, 1, 1, COLS.length).setValues([[
-      folio, ahora, vence, pedido.nombre, pedido.zona || "", texto,
-      Number(pedido.total) || 0, Number(pedido.anticipo) || 0, "pendiente", "apartado", JSON.stringify(items)
+      folio, new Date(), pedido.nombre, pedido.zona || "", texto,
+      Number(pedido.total) || 0, Number(pedido.anticipo) || 0, "pendiente", STOCK.sin, JSON.stringify(items)
     ]]);
-    h.getRange(fila, C.Fecha, 1, 2).setNumberFormat("dd/mm hh:mm");
+    h.getRange(fila, C.Fecha).setNumberFormat("dd/mm hh:mm");
     h.getRange(fila, C.Total, 1, 2).setNumberFormat("$#,##0");
 
-    avisar(`🔥 Nuevo apartado ${folio}`,
-      `${pedido.nombre} · ${pedido.zona || "sin zona"}\n\n${texto}\n\nTotal: $${pedido.total} · Anticipo: $${pedido.anticipo}\n` +
-      `Vence: ${Utilities.formatDate(vence, ZONA, "dd/MM HH:mm")}\n\nCuando te transfiera, cambia el estado a "pagado".\n` +
+    avisar(`🔥 Nuevo pedido ${folio}`,
+      `${pedido.nombre} · ${pedido.zona || "sin zona"}\n\n${texto}\n\nTotal: $${pedido.total} · Anticipo: $${pedido.anticipo}\n\n` +
+      `Cuando te mande la captura del anticipo, cambia el estado a "pagado" y se resta del stock.\n` +
       SpreadsheetApp.getActive().getUrl());
 
     return json({ ok: true, folio });
@@ -98,36 +96,34 @@ function alEditar(e) {
   } finally { lock.releaseLock(); }
 }
 
-/* ---------- 4. Cada hora libera los apartados vencidos ---------- */
-function revisarVencidos() {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    const h = hojaApartados(), n = h.getLastRow();
-    if (n < 2) return;
-    const datos = h.getRange(2, 1, n - 1, COLS.length).getValues();
-    const ahora = new Date();
-    datos.forEach((d, k) => {
-      if (String(d[C.Estado - 1]).toLowerCase() === "pendiente" && d[C.Vence - 1] instanceof Date && d[C.Vence - 1] < ahora) {
-        h.getRange(k + 2, C.Estado).setValue("vencido");
-        aplicarEstado(h, k + 2);
-      }
-    });
-  } finally { lock.releaseLock(); }
+/* pagado/entregado → resta del stock · cancelado → lo regresa */
+function aplicarEstado(h, f) {
+  const estado = norm(h.getRange(f, C.Estado).getValue());
+  const restado = String(h.getRange(f, C.Stock).getValue()).trim() === STOCK.restado;
+  const items = JSON.parse(h.getRange(f, C.Items).getValue() || "[]").filter(i => !i.pedido);
+
+  if ((estado === "pagado" || estado === "entregado") && !restado) {
+    const prod = leerProductos();
+    const faltantes = revisarStock(prod, items);
+    if (faltantes.length) {
+      h.getRange(f, C.Stock).setValue("⚠ falta stock: " + faltantes.map(x => x.codigo + (x.talla ? " " + x.talla : "") + " (hay " + x.disponible + ")").join(", "));
+      return;
+    }
+    items.forEach(i => mover(prod, i, -i.cant));
+    escribirProductos(prod);
+    h.getRange(f, C.Stock).setValue(STOCK.restado);
+  }
+  if (estado === "cancelado" && restado) {
+    const prod = leerProductos();
+    items.forEach(i => mover(prod, i, +i.cant));
+    escribirProductos(prod);
+    h.getRange(f, C.Stock).setValue(STOCK.regresado);
+  }
 }
 
-/* Regresa o confirma el stock según el estado de una fila */
-function aplicarEstado(h, f) {
-  const estado = String(h.getRange(f, C.Estado).getValue()).toLowerCase().trim();
-  const stock = String(h.getRange(f, C.Stock).getValue()).toLowerCase().trim();
-  if (estado === "pagado" && stock === "apartado") h.getRange(f, C.Stock).setValue("vendido");
-  if ((estado === "cancelado" || estado === "vencido") && (stock === "apartado" || stock === "vendido")) {
-    const items = JSON.parse(h.getRange(f, C.Items).getValue() || "[]");
-    const prod = leerProductos();
-    items.filter(i => !i.pedido).forEach(i => mover(prod, i, +i.cant));
-    escribirProductos(prod);
-    h.getRange(f, C.Stock).setValue("regresado");
-  }
+function revisarStock(prod, items) {
+  return items.filter(i => !i.pedido).map(i => ({ codigo: i.codigo, talla: i.talla, disponible: Math.max(0, disponible(prod, i)), cant: i.cant }))
+    .filter(x => x.disponible < x.cant).map(({ cant, ...x }) => x);
 }
 
 /* ---------- productos ---------- */

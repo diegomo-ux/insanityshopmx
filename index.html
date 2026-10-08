@@ -593,7 +593,6 @@ const CONFIG = {
   fotosFamilia: 15,              // busca familia-1 … familia-15; si falta un número, se lo salta
   // Apartados: pega aquí el link de tu Apps Script (termina en /exec). Vacío = solo WhatsApp, sin restar stock.
   apartadosURL: "",
-  horasApartado: 24,
   // Sobre pedido: días de entrega
   diasPin: 10,                   // pines en stock 0: se hacen a mano
   diasPedido: 15,                // artículos con "sobrepedido = si" en la Sheet             // solo para mostrarlo al cliente; el límite real se pone en el Apps Script
@@ -989,7 +988,7 @@ function mensajeWhatsApp(folio) {
     `Restante: ${dinero(t.resto)} al recibir (efectivo o transferencia)`,
     entregaTexto(),
     "",
-    folio ? `Mis piezas quedan apartadas ${CONFIG.horasApartado} horas. ¿Me pasas los datos para el anticipo?` : "Quiero apartar mi pedido. ¿Me pasas los datos para el anticipo?"
+    "Quiero apartar mi pedido. ¿Me pasas los datos para el anticipo?"
   ].filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n");
 }
 
@@ -1029,7 +1028,7 @@ function renderCarrito() {
       <div class="campo"><label for="inNombre">Tu nombre</label><input id="inNombre" autocomplete="name" placeholder="Cómo te llamas" value="${esc(datosEntrega.nombre)}"></div>
       <div class="campo"><label for="inZona">Zona de entrega</label><select id="inZona"><option value="">Elige tu zona</option>${zonas}</select></div>
       <div class="mini-reglas">
-        <span>Se aparta con el <b>50%</b> por transferencia${CONFIG.apartadosURL ? `; tus piezas se guardan <b>${CONFIG.horasApartado} horas</b>` : ""}.</span>
+        <span>Se aparta con el <b>50%</b> por transferencia. Tu pedido se confirma al recibir tu anticipo.</span>
         <span>${carrito.some(i => bajoPedido(buscar(i.codigo)))
           ? `<b>Tienes piezas sobre pedido.</b> ${esc(entregaTexto().replace("Entrega: ", ""))}, en ${esc(CONFIG.zonas.join(" y "))}.`
           : `Entregamos en <b>${esc(CONFIG.entrega)}</b> en ${esc(CONFIG.zonas.join(" y "))}.`}</span>
@@ -1066,7 +1065,7 @@ async function apartar() {
   if (r.ok) {
     const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp(r.folio))}`;
     carrito = []; guardar(); actualizarContador();
-    $("#carritoBody").innerHTML = `<div class="vacio"><strong>Apartado ${esc(r.folio)}</strong>Tus piezas quedan guardadas ${CONFIG.horasApartado} horas. Manda el anticipo por WhatsApp para confirmar.</div>`;
+    $("#carritoBody").innerHTML = `<div class="vacio"><strong>Pedido ${esc(r.folio)}</strong>Recibimos tu pedido. Manda tu anticipo por WhatsApp para confirmarlo.</div>`;
     $("#carritoFoot").innerHTML = `<a class="btn btn-neon btn-full" href="${url}" target="_blank" rel="noopener">Abrir WhatsApp</a>`;
     location.href = url;
     return;
