@@ -84,7 +84,10 @@ function doPost(e) {
   }
 }
 
-function doGet() { return json({ ok: true, mensaje: "Apartados INSANITY funcionando" }); }
+function doGet(e) {
+  if (e && e.parameter && e.parameter.panel) return panelPagina(e);   // panel de inventario (panel.gs)
+  return json({ ok: true, mensaje: "Apartados INSANITY funcionando" });
+}
 
 /* ---------- 3. Cuando cambias el Estado a mano ---------- */
 function alEditar(e) {

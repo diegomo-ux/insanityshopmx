@@ -6,6 +6,7 @@ Sitio de una sola página para GitHub Pages. Los productos se leen de una Google
 
 - `index.html` → todo el sitio. Arriba del `<script>` está `CONFIG`, lo único que vas a editar.
 - `apartados.gs` → código del Apps Script que aparta y resta el stock (va dentro de la Google Sheet, no en GitHub).
+- `panel.gs` y `panel_ins.html` → panel de inventario para el celular (van en el Apps Script, ver sección 5).
 - `img/familia/` → fotos lifestyle (hero y La Familia). 1080 × 1350 px.
 - `img/productos/` → fotos de producto, nombradas con el código: `INS-B002.jpg`. 1080 × 1350 px, menos de 300 KB.
 - `plantilla-productos.csv` → importa este archivo a Google Sheets para empezar.
@@ -90,6 +91,51 @@ Si después cambias el código del script: Implementar → Administrar implement
 - Si al poner *pagado* sale `⚠ falta stock`, alguien más se llevó la pieza antes. Corrige el stock o habla con el cliente, y vuelve a elegir *pagado*.
 - Las piezas sobre pedido (pines y perfumes en 0, o `sobrepedido = si`) nunca restan stock.
 - Avisos por Telegram (opcional): crea un bot con @BotFather y llena `TELEGRAM_TOKEN` y `TELEGRAM_CHAT`.
+
+## 5. Panel de inventario (celular)
+
+Una página con la foto de cada producto para:
+
+- **Vendí**: resta del stock y agrega la venta a *Ventas* (igual que marcar ✓).
+- **Compré**: suma las piezas que te llegaron.
+- **Contar**: pone el número exacto que tienes (cuando cuentas tu inventario).
+
+Todo queda anotado en la pestaña *Movimientos*. Después de cada cambio tienes 10 segundos para darle **Deshacer**.
+
+### Instalar (una sola vez)
+
+1. Extensiones → Apps Script → botón **+** junto a "Archivos" → Secuencia de comandos → nombre `panel` → pega todo `panel.gs`.
+2. Botón **+** → HTML → nombre `panel_ins` (Apps Script no deja repetir `panel`) → borra lo que trae, pega todo `panel_ins.html` y guarda.
+3. En `apartados.gs`, busca la línea que empieza con `function doGet` y cámbiala por:
+
+   ```js
+   function doGet(e) {
+     if (e && e.parameter && e.parameter.panel) return panelPagina(e);   // panel de inventario (panel.gs)
+     return json({ ok: true, mensaje: "Apartados INSANITY funcionando" });
+   }
+   ```
+
+4. Elige la función `instalarPanel` arriba y da ▶ Ejecutar. En *Registro de ejecución* sale tu clave.
+5. Implementar → Administrar implementaciones → editar → Versión: *Nueva versión* → Implementar. El link no cambia.
+6. En el celular abre tu link que termina en `/exec` y agrégale `?panel=TU-CLAVE` al final. Luego, en el menú del navegador: *Agregar a pantalla de inicio*.
+
+- El link con la clave funciona como llave: no lo compartas. Si alguien lo vio, ejecuta `nuevaClavePanel` y usa la clave nueva.
+- La web tarda unos 5 minutos en mostrar el stock nuevo (caché de Google). El panel lo ve al momento.
+- Las fotos salen de `img/productos/` en GitHub. Si un producto no tiene foto, sale su código.
+- Con tallas: elige la talla antes de guardar. En *Compré* y *Contar* puedes agregar una talla nueva con **+ Otra**.
+- El número de cada tarjeta es el stock: naranja = quedan 2 o menos, rojo = 0, gris = sin stock capturado.
+
+### Nuevo producto con la cámara
+
+En el panel, el botón **+ Nuevo** abre la cámara del cel:
+
+1. Toma la foto (o elígela de la galería). Arrástrala para acomodarla y usa la barra para acercar. Sale recortada a 1080 × 1350 con el logo INSANITY abajo (blanco, negro o sin logo).
+2. Escribe nombre, categoría y precio. Opcional: lo que te costó, talla y descripción.
+3. **Guardar producto**: se le da el código siguiente (INS-B0117, …), la foto se guarda en la carpeta *INSANITY fotos* de tu Google Drive y el producto queda en *plantilla-productos*. Si pusiste costo, también se agrega a *Costos*.
+
+- La tienda lo muestra en unos 5 minutos. Si apagas "Mostrar en la tienda web", queda solo en el panel.
+- La primera vez Google pide un permiso nuevo (Drive): en Apps Script ejecuta `instalarPanel` y acéptalo, y luego publica una *Nueva versión*.
+- No borres ni muevas la carpeta *INSANITY fotos*: ahí viven las fotos que muestra la tienda.
 
 ## Paquetes de mayoreo (aromas)
 
