@@ -778,7 +778,7 @@ function normalizar(p, desdeSheet) {
   };
 }
 
-const DIAG = { version: "v8", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
+const DIAG = { version: "v9", sheet: CONFIG.sheetCSV ? "configurada" : "VACÍA en CONFIG", estado: "", columnas: "", filas: 0, productos: [] };
 
 async function cargarProductos() {
   if (CONFIG.sheetCSV) {
@@ -845,10 +845,11 @@ function renderPacks() {
   $("#packs").innerHTML = visibles.map((k, i) => {
     const linea = k.linea || "clasico";
     const aromas = PRODUCTOS.filter(p => esAroma(p, linea) && pedible(p));
-    const min = Math.min(...aromas.map(p => p.precio));
+    const precios = aromas.map(p => p.precio).filter(n => n > 0);   // ignora aromas sin precio en la Sheet
+    const min = precios.length ? Math.min(...precios) : 0;
     const sinStock = aromas.reduce((s, p) => s + (bajoPedido(p) ? MAX_PEDIDO : p.stock), 0) < k.cantidad;
     const activo = packActivo(linea) === k;
-    const nuevo = k.precio ? k.precio : (min - k.descuento) * k.cantidad;
+    const nuevo = k.precio ? k.precio : Math.max(0, min - k.descuento) * k.cantidad;
     return `<button class="pack${activo ? " activo" : ""}" type="button" data-pack="${CONFIG.paquetes.indexOf(k)}" ${sinStock ? 'aria-disabled="true" style="opacity:.45"' : ""}>
       ${activo ? '<span class="pack-sello">Aplicado</span>' : ""}
       <span class="pack-nombre">${esc(k.nombre)}</span>
@@ -1243,7 +1244,7 @@ async function diagnostico() {
   for (const p of PRODUCTOS) {
     let encontrada = "";
     for (const u of p.fotos) { if (await probarFoto(u)) { encontrada = u; break; } }
-    t += `${p.codigo} · ${p.nombre}\n   foto: ${encontrada ? "✔ " + encontrada : "✘ no encontrada. Buscó: " + (p.fotos[0] || "nada")}\n`;
+    t += `${p.codigo} · ${p.nombre}\n${p.precio > 0 ? "" : "   ⚠ SIN PRECIO en la Sheet\n"}   foto: ${encontrada ? "✔ " + encontrada : "✘ no encontrada. Buscó: " + (p.fotos[0] || "nada")}\n`;
   }
   caja.textContent = t + "\nCierra recargando la página sin #diagnostico.";
 }
